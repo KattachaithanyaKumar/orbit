@@ -87,3 +87,60 @@ export async function deleteWorkspace(
     throw new Error(data.message || "Failed to delete workspace");
   }
 }
+
+export interface Folder {
+  id: number;
+  name: string;
+  icon: string;
+  position: number;
+  createdAt: string;
+}
+
+export async function getFolders(
+  workspaceId: number,
+  token: string,
+): Promise<Folder[]> {
+  const res = await fetch(`${API_URL}/workspaces/${workspaceId}/folders`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to fetch folders");
+  }
+  return res.json();
+}
+
+export async function createFolder(
+  workspaceId: number,
+  data: { name: string; icon?: string },
+  token: string,
+): Promise<Folder> {
+  const res = await fetch(`${API_URL}/workspaces/${workspaceId}/folders`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to create folder");
+  }
+  return res.json();
+}
+
+export async function deleteFolder(
+  workspaceId: number,
+  folderId: number,
+  token: string,
+): Promise<void> {
+  const res = await fetch(
+    `${API_URL}/workspaces/${workspaceId}/folders/${folderId}`,
+    {
+      method: "DELETE",
+      headers: authHeaders(token),
+    },
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to delete folder");
+  }
+}

@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FolderTree, Search } from "lucide-react";
 import Sidebar from "@/components/sidebar/sidebar";
+import ThemeToggle from "@/app/components/theme-toggle";
 import CreateWorkspaceModal from "@/app/components/create-workspace-modal";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchWorkspaces, setActiveWorkspace } from "@/store/workspaces-slice";
@@ -69,7 +70,8 @@ export default function WorkspacePage() {
                   {workspace.description}
                 </span>
               )}
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-2">
+                <ThemeToggle />
                 <button className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                   <Search className="h-4 w-4" />
                   Search
