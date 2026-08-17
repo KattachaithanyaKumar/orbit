@@ -25,7 +25,12 @@ interface FileEditorProps {
 
 function extractTitle(content: unknown): string {
   if (!content || typeof content !== "object") return "Untitled";
-  const doc = content as { content?: Array<{ type: string; content?: Array<{ type: string; text?: string }> }> };
+  const doc = content as {
+    content?: Array<{
+      type: string;
+      content?: Array<{ type: string; text?: string }>;
+    }>;
+  };
   if (!doc.content || !Array.isArray(doc.content)) return "Untitled";
   for (const node of doc.content) {
     if (node.content && Array.isArray(node.content)) {
@@ -77,8 +82,12 @@ export default function FileEditor({
           onStatusChange?.("saved");
         } catch (err: unknown) {
           onStatusChange?.("error");
-          const message =
-            err instanceof Error ? err.message : "Failed to save changes.";
+          let message = "Failed to save changes.";
+          if (err && typeof err === "object" && "message" in err) {
+            message = String((err as { message: unknown }).message);
+          } else if (typeof err === "string") {
+            message = err;
+          }
           toast.error("Save failed", { description: message });
         }
       }, 1000);
@@ -115,8 +124,7 @@ export default function FileEditor({
     },
     editorProps: {
       attributes: {
-        class:
-          "tiptap focus:outline-none min-h-full px-12 py-8",
+        class: "tiptap focus:outline-none min-h-full px-12 py-8",
       },
     },
   });
