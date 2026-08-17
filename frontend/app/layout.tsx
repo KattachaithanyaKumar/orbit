@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ToasterProvider from "./components/toaster-provider";
@@ -27,12 +28,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <head>
-        <script
+        <link rel="icon" href="/orbit-logo-dark.svg" media="(prefers-color-scheme: light)" />
+        <link rel="icon" href="/orbit-logo-light.svg" media="(prefers-color-scheme: dark)" />
+      </head>
+      <body suppressHydrationWarning className="min-h-screen bg-background text-foreground font-sans selection:bg-selection-bg">
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
-                const saved = localStorage.getItem('theme');
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var saved = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 if (saved === 'dark' || (!saved && prefersDark)) {
                   document.documentElement.classList.add('dark');
                 }
@@ -40,8 +47,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             `,
           }}
         />
-      </head>
-      <body className="min-h-screen bg-background text-foreground font-sans selection:bg-selection-bg">
         <Providers>
           <ToasterProvider />
           {children}
