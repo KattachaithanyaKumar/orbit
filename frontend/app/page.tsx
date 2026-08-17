@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import ThemeToggle from "./components/theme-toggle";
 import AuthModal from "./components/auth-modal";
+import { useAppSelector, useAppDispatch } from "../store/hooks";
+import { logout } from "../store/auth-slice";
 
 const features = [
   { label: "Multi-Folder Directories", icon: FolderTree },
@@ -22,6 +24,8 @@ const features = [
 export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"signup" | "login">("signup");
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
 
   const openModal = (mode: "signup" | "login") => {
     setModalMode(mode);
@@ -34,12 +38,24 @@ export default function Home() {
         <span className="text-xl font-bold tracking-tight">orbit</span>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <button
-            onClick={() => openModal("login")}
-            className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-          >
-            Login
-          </button>
+          {isAuthenticated ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">{user?.email}</span>
+              <button
+                onClick={() => dispatch(logout())}
+                className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => openModal("login")}
+              className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              Login
+            </button>
+          )}
         </div>
       </nav>
 
@@ -62,18 +78,26 @@ export default function Home() {
           seamlessly online or offline.
         </p>
         <div className="relative flex gap-4">
-          <button
-            onClick={() => openModal("signup")}
-            className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
-          >
-            Get started
-          </button>
-          <button
-            onClick={() => openModal("login")}
-            className="rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-muted"
-          >
-            Login
-          </button>
+          {isAuthenticated ? (
+            <span className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground">
+              Welcome back, {user?.email}
+            </span>
+          ) : (
+            <>
+              <button
+                onClick={() => openModal("signup")}
+                className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
+              >
+                Get started
+              </button>
+              <button
+                onClick={() => openModal("login")}
+                className="rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-muted"
+              >
+                Login
+              </button>
+            </>
+          )}
         </div>
       </main>
 
