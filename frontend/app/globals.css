@@ -92,18 +92,33 @@ body {
   --normal-bg: var(--card);
   --normal-border: var(--border);
   --normal-text: var(--foreground);
+  --normal-description: var(--foreground);
+  --normal-description-opacity: 1;
   --success-bg: var(--card);
   --success-border: var(--border);
   --success-text: var(--foreground);
+  --success-description: var(--foreground);
+  --success-description-opacity: 1;
   --error-bg: var(--card);
   --error-border: var(--border);
   --error-text: var(--foreground);
+  --error-description: var(--foreground);
+  --error-description-opacity: 1;
   --info-bg: var(--card);
   --info-border: var(--border);
   --info-text: var(--foreground);
+  --info-description: var(--foreground);
+  --info-description-opacity: 1;
   --warning-bg: var(--card);
   --warning-border: var(--border);
   --warning-text: var(--foreground);
+  --warning-description: var(--foreground);
+  --warning-description-opacity: 1;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-description] {
+  opacity: 1 !important;
+  color: var(--foreground) !important;
 }
 
 /* Tiptap editor styles */
