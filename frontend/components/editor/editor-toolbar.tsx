@@ -384,6 +384,7 @@ function LinkPopover({ editor }: { editor: Editor }) {
 
 function ImagePopover({ editor }: { editor: Editor }) {
   const [url, setUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleInsertUrl = useCallback(() => {
@@ -400,12 +401,45 @@ function ImagePopover({ editor }: { editor: Editor }) {
 
       if (!file.type.startsWith("image/")) return;
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        editor.chain().focus().setImage({ src: dataUrl }).run();
+      setUploading(true);
+
+      const img = new window.Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = () => {
+        const maxwidth = 1920;
+        const maxheight = 1080;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxwidth) {
+          height = (height * maxwidth) / width;
+          width = maxwidth;
+        }
+        if (height > maxheight) {
+          width = (width * maxheight) / height;
+          height = maxheight;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          editor.chain().focus().setImage({ src: dataUrl }).run();
+        }
+        URL.revokeObjectURL(objectUrl);
+        setUploading(false);
       };
-      reader.readAsDataURL(file);
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        setUploading(false);
+      };
+
+      img.src = objectUrl;
       e.target.value = "";
     },
     [editor]
@@ -441,10 +475,20 @@ function ImagePopover({ editor }: { editor: Editor }) {
               variant="outline"
               size="sm"
               onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
               className="mb-2"
             >
-              <Upload className="mr-1.5 h-3.5 w-3.5" />
-              Upload from device
+              {uploading ? (
+                <>
+                  <div className="mr-1.5 h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted border-t-primary" />
+                  Compressing...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-1.5 h-3.5 w-3.5" />
+                  Upload from device
+                </>
+              )}
             </Button>
             <p className="text-xs text-muted-foreground">
               PNG, JPG, GIF, or WebP
