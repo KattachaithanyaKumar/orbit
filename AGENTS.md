@@ -109,6 +109,7 @@ Before adding one: check if it already exists or an existing dep can solve it. P
 
 - Branch from `main`: `feat/`, `fix/`, `chore/`, `refactor/`, `docs/`, `test/` + description
 - Never push to `main` directly; every change goes through a PR
+- **Keep your branch updated:** Before starting work on a feature branch, run `git fetch origin main && git rebase origin/main` (or `git merge origin/main`) to pull the latest changes from `main`. This prevents large merge conflicts and keeps the branch history clean. Do this periodically during long-running branches.
 - Focused commits, no mixed unrelated changes
 - Run lint/typecheck/tests before pushing, review diff before committing
 - After pushing a feature branch, open a PR against main using gh pr create with a concise title and a summary of the change (what/why, not a diff dump). Do not merge it — leave it open for manual review and approval.
