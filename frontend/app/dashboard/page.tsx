@@ -53,12 +53,12 @@ export default function DashboardPage() {
               <ThemeToggle />
             </header>
 
-            <div className="flex flex-1 items-center justify-center text-center">
+            <div className="flex flex-1 flex-col items-center justify-center text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
                 <FolderTree className="h-8 w-8 text-muted-foreground" />
               </div>
               <h2 className="mb-1 text-lg font-semibold">Select a workspace</h2>
-              <p className="mb-6 max-w-sm text-sm text-muted-foreground">
+              <p className="max-w-sm text-sm text-muted-foreground">
                 Choose a workspace from the sidebar or create a new one to get
                 started.
               </p>

@@ -101,6 +101,8 @@ Before adding one: check if it already exists or an existing dep can solve it. P
 
 ## Workflow
 
+**Before starting a new task:** Comment a summary of all previous changes at the top of the conversation or in a changelog section. This helps track what was done and why.
+
 **Before changes:** inspect repo → read relevant files → check conventions/deps → confirm functionality doesn't already exist → make the smallest reasonable change.
 
 **Per feature:** Understand → Inspect → Plan → Implement → Typecheck → Lint → Test → Review diff (run **code-review** skill here). No unrelated refactors.

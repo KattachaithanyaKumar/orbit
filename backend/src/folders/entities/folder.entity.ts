@@ -5,8 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { Workspace } from '../../workspaces/entities/workspace.entity';
+import { File } from '../../files/entities/file.entity';
 
 @Entity('folders')
 export class Folder {
@@ -26,6 +28,9 @@ export class Folder {
     onDelete: 'CASCADE',
   })
   workspace: Workspace;
+
+  @OneToMany(() => File, (file) => file.folder)
+  files: File[];
 
   @CreateDateColumn()
   createdAt: Date;
