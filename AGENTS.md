@@ -18,3 +18,4 @@
 - **Every change** must go through a branch + PR, never push directly to `main`
 - Commit messages should be concise and descriptive
 - Always run lint/typecheck before pushing if available
+- **Backend changes**: When implementing or modifying backend code (entities, services, controllers, modules), always generate unit tests at the end. Tests should cover the new/changed logic and must pass before completing the task.
