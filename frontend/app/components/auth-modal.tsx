@@ -7,10 +7,7 @@ import { toast } from "sonner";
 import { signup, login } from "../../lib/api";
 import { useAppDispatch } from "../../store/hooks";
 import { setCredentials } from "../../store/auth-slice";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -74,21 +71,18 @@ export default function AuthModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent
-        showCloseButton={false}
-        className="gap-0 p-0 sm:max-w-md"
-      >
+      <DialogContent showCloseButton={false} className="gap-0 p-0 sm:max-w-md">
         <div className="flex flex-col items-center px-8 pt-10 pb-8">
           <div className="mb-5">
             <img
               src="/orbit-logo-dark.svg"
               alt="Orbit"
-              className="h-12 w-12 block dark:hidden"
+              className="h-12 w-12 block dark:hidden rounded-lg"
             />
             <img
               src="/orbit-logo-light.svg"
               alt="Orbit"
-              className="h-12 w-12 hidden dark:block"
+              className="h-12 w-12 hidden dark:block rounded-lg"
             />
           </div>
 
@@ -131,7 +125,9 @@ export default function AuthModal({
                 id="password"
                 type="password"
                 placeholder={
-                  mode === "signup" ? "Create a password" : "Enter your password"
+                  mode === "signup"
+                    ? "Create a password"
+                    : "Enter your password"
                 }
                 required
                 minLength={mode === "signup" ? 6 : undefined}

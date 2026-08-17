@@ -3,7 +3,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { Workspace } from '../../workspaces/entities/workspace.entity';
 
 @Entity('users')
 export class User {
@@ -15,6 +17,9 @@ export class User {
 
   @Column()
   password: string;
+
+  @OneToMany(() => Workspace, (workspace) => workspace.owner)
+  workspaces: Workspace[];
 
   @CreateDateColumn()
   createdAt: Date;
