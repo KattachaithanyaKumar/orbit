@@ -9,6 +9,7 @@ import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
+import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateFileContent } from "@/store/files-slice";
 import { FileItem } from "@/lib/api";
@@ -18,7 +19,7 @@ interface FileEditorProps {
   file: FileItem;
   workspaceId: number;
   folderId: number;
-  onStatusChange?: (status: "saved" | "saving") => void;
+  onStatusChange?: (status: "saved" | "saving" | "error") => void;
   onTitleChange?: (title: string) => void;
 }
 
@@ -74,8 +75,11 @@ export default function FileEditor({
             }),
           ).unwrap();
           onStatusChange?.("saved");
-        } catch {
-          onStatusChange?.("saving");
+        } catch (err: unknown) {
+          onStatusChange?.("error");
+          const message =
+            err instanceof Error ? err.message : "Failed to save changes.";
+          toast.error("Save failed", { description: message });
         }
       }, 1000);
     },

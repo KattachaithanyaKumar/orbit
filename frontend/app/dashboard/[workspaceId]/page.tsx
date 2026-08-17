@@ -20,7 +20,7 @@ export default function WorkspacePage() {
   const { workspaces, loading } = useAppSelector((state) => state.workspaces);
   const { activeFile, activeFolderId } = useAppSelector((state) => state.files);
   const [modalOpen, setModalOpen] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<"saved" | "saving">("saved");
+  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved");
   const [displayTitle, setDisplayTitle] = useState("");
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function WorkspacePage() {
     }
   }, [activeFile?.id]);
 
-  const handleStatusChange = useCallback((status: "saved" | "saving") => {
+  const handleStatusChange = useCallback((status: "saved" | "saving" | "error") => {
     setSaveStatus(status);
   }, []);
 
@@ -86,8 +86,12 @@ export default function WorkspacePage() {
             <>
               <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
               <h1 className="truncate text-sm font-medium">{displayTitle || activeFile.name}</h1>
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {saveStatus === "saving" ? "Saving..." : "Saved"}
+              <span className={`shrink-0 text-xs ${saveStatus === "error" ? "text-destructive" : "text-muted-foreground"}`}>
+                {saveStatus === "saving"
+                  ? "Saving..."
+                  : saveStatus === "error"
+                    ? "Save failed"
+                    : "Saved"}
               </span>
             </>
           ) : workspace ? (
