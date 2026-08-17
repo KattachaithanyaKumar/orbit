@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { signup, login } from "../../lib/api";
+import { useAppDispatch } from "../../store/hooks";
+import { setCredentials } from "../../store/auth-slice";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +35,8 @@ export default function AuthModal({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,20 +45,21 @@ export default function AuthModal({
     try {
       if (mode === "signup") {
         const data = await signup(email, password);
-        localStorage.setItem("token", data.token);
+        dispatch(setCredentials({ token: data.token, user: data.user }));
         toast.success("Account created!", {
           description: "Welcome to Orbit.",
         });
       } else {
         const data = await login(email, password);
-        localStorage.setItem("token", data.token);
+        dispatch(setCredentials({ token: data.token, user: data.user }));
         toast.success("Welcome back!", {
           description: "You're logged in.",
         });
       }
-      onClose();
       setEmail("");
       setPassword("");
+      onClose();
+      router.push("/");
     } catch (err: any) {
       toast.error(mode === "signup" ? "Signup failed" : "Login failed", {
         description: err.message,
