@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import {
   FolderTree,
@@ -11,8 +12,7 @@ import {
 } from "lucide-react";
 import ThemeToggle from "./components/theme-toggle";
 import AuthModal from "./components/auth-modal";
-import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { logout } from "../store/auth-slice";
+import { useAppSelector } from "../store/hooks";
 
 const features = [
   { label: "Multi-Folder Directories", icon: FolderTree },
@@ -24,8 +24,7 @@ const features = [
 export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"signup" | "login">("signup");
-  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-  const dispatch = useAppDispatch();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
 
   const openModal = (mode: "signup" | "login") => {
     setModalMode(mode);
@@ -39,15 +38,12 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           {isAuthenticated ? (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">{user?.email}</span>
-              <button
-                onClick={() => dispatch(logout())}
-                className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
-              >
-                Logout
-              </button>
-            </div>
+            <Link
+              href="/dashboard"
+              className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+            >
+              Dashboard
+            </Link>
           ) : (
             <button
               onClick={() => openModal("login")}
@@ -79,9 +75,12 @@ export default function Home() {
         </p>
         <div className="relative flex gap-4">
           {isAuthenticated ? (
-            <span className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground">
-              Welcome back, {user?.email}
-            </span>
+            <Link
+              href="/dashboard"
+              className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
+            >
+              Go to dashboard
+            </Link>
           ) : (
             <>
               <button
