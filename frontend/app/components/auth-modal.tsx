@@ -2,15 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { signup, login } from "../../lib/api";
 import { useAppDispatch } from "../../store/hooks";
 import { setCredentials } from "../../store/auth-slice";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -31,6 +28,7 @@ export default function AuthModal({
 }: AuthModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -57,9 +55,11 @@ export default function AuthModal({
       setPassword("");
       onClose();
       router.push("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
       toast.error(mode === "signup" ? "Signup failed" : "Login failed", {
-        description: err.message,
+        description: message,
       });
     } finally {
       setLoading(false);
@@ -74,21 +74,18 @@ export default function AuthModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent
-        showCloseButton={false}
-        className="gap-0 p-0 sm:max-w-md"
-      >
+      <DialogContent showCloseButton={false} className="gap-0 p-0 sm:max-w-md">
         <div className="flex flex-col items-center px-8 pt-10 pb-8">
           <div className="mb-5">
             <img
               src="/orbit-logo-dark.svg"
               alt="Orbit"
-              className="h-12 w-12 block dark:hidden"
+              className="h-12 w-12 block dark:hidden rounded-lg"
             />
             <img
               src="/orbit-logo-light.svg"
               alt="Orbit"
-              className="h-12 w-12 hidden dark:block"
+              className="h-12 w-12 hidden dark:block rounded-lg"
             />
           </div>
 
@@ -127,18 +124,34 @@ export default function AuthModal({
               >
                 Password
               </label>
-              <Input
-                id="password"
-                type="password"
-                placeholder={
-                  mode === "signup" ? "Create a password" : "Enter your password"
-                }
-                required
-                minLength={mode === "signup" ? 6 : undefined}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder={
+                    mode === "signup"
+                      ? "Create a password"
+                      : "Enter your password"
+                  }
+                  required
+                  minLength={mode === "signup" ? 6 : undefined}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-10 w-full rounded-lg border border-input bg-transparent px-3 pr-10 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {mode === "signup" && (
                 <p className="text-xs text-muted-foreground">
                   Must be at least 6 characters.

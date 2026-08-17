@@ -53,6 +53,8 @@ export class AuthService {
   }
 
   private generateToken(id: number, email: string) {
+    const secret = process.env.JWT_SECRET || 'orbit-secret';
+    console.log('[AuthService] generating token with secret:', secret);
     return this.jwtService.sign({ sub: id, email });
   }
 }

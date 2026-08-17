@@ -5,7 +5,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { WorkspacesModule } from './workspaces/workspaces.module';
 import { User } from './users/entities/user.entity';
+import { Workspace } from './workspaces/entities/workspace.entity';
 
 @Module({
   imports: [
@@ -20,12 +22,13 @@ import { User } from './users/entities/user.entity';
         username: config.get('DB_USERNAME', 'root'),
         password: config.get('DB_PASSWORD', 'root'),
         database: config.get('DB_DATABASE', 'orbit'),
-        entities: [User],
+        entities: [User, Workspace],
         synchronize: true,
       }),
     }),
     UsersModule,
     AuthModule,
+    WorkspacesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

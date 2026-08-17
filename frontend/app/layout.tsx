@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ToasterProvider from "./components/toaster-provider";
@@ -30,11 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <link rel="icon" href="/orbit-logo-dark.svg" media="(prefers-color-scheme: light)" />
         <link rel="icon" href="/orbit-logo-light.svg" media="(prefers-color-scheme: dark)" />
-      </head>
-      <body suppressHydrationWarning className="min-h-screen bg-background text-foreground font-sans selection:bg-selection-bg">
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
+        <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -47,6 +42,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             `,
           }}
         />
+      </head>
+      <body suppressHydrationWarning className="min-h-screen bg-background text-foreground font-sans selection:bg-selection-bg">
         <Providers>
           <ToasterProvider />
           {children}
