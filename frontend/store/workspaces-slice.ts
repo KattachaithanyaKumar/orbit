@@ -1,5 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { Workspace, getWorkspaces as apiGetWorkspaces, createWorkspace as apiCreateWorkspace, deleteWorkspace as apiDeleteWorkspace } from "@/lib/api";
+import {
+  Workspace,
+  getWorkspaces as apiGetWorkspaces,
+  createWorkspace as apiCreateWorkspace,
+  deleteWorkspace as apiDeleteWorkspace,
+} from "@/lib/api";
 
 interface WorkspacesState {
   workspaces: Workspace[];
@@ -32,7 +37,12 @@ export const createNewWorkspace = createAsyncThunk(
     data,
     token,
   }: {
-    data: { name: string; description?: string; icon?: string; accentColor?: string };
+    data: {
+      name: string;
+      description?: string;
+      icon?: string;
+      accentColor?: string;
+    };
     token: string;
   }) => {
     return apiCreateWorkspace(data, token);
@@ -81,7 +91,9 @@ const workspacesSlice = createSlice({
         state.workspaces.unshift(action.payload);
       })
       .addCase(deleteWorkspaceById.fulfilled, (state, action) => {
-        state.workspaces = state.workspaces.filter((ws) => ws.id !== action.payload);
+        state.workspaces = state.workspaces.filter(
+          (ws) => ws.id !== action.payload,
+        );
         if (state.activeWorkspaceId === action.payload) {
           state.activeWorkspaceId = null;
           localStorage.removeItem("activeWorkspaceId");

@@ -56,7 +56,8 @@ export default function AuthModal({
       onClose();
       router.push("/dashboard");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Something went wrong.";
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
       toast.error(mode === "signup" ? "Signup failed" : "Login failed", {
         description: message,
       });
@@ -79,12 +80,12 @@ export default function AuthModal({
             <img
               src="/orbit-logo-dark.svg"
               alt="Orbit"
-              className="h-12 w-12 block dark:hidden"
+              className="h-12 w-12 block dark:hidden rounded-lg"
             />
             <img
               src="/orbit-logo-light.svg"
               alt="Orbit"
-              className="h-12 w-12 hidden dark:block"
+              className="h-12 w-12 hidden dark:block rounded-lg"
             />
           </div>
 

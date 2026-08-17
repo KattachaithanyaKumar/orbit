@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { createNewWorkspace, setActiveWorkspace } from "../../store/workspaces-slice";
+import {
+  createNewWorkspace,
+  setActiveWorkspace,
+} from "../../store/workspaces-slice";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +19,18 @@ interface CreateWorkspaceModalProps {
 }
 
 const EMOJI_OPTIONS = [
-  "📁", "🚀", "💡", "🎯", "🎨", "🏠",
-  "📝", "🔬", "🎮", "🌟", "📊", "🛠️",
+  "📁",
+  "🚀",
+  "💡",
+  "🎯",
+  "🎨",
+  "🏠",
+  "📝",
+  "🔬",
+  "🎮",
+  "🌟",
+  "📊",
+  "🛠️",
 ];
 
 const COLOR_OPTIONS = [
@@ -52,7 +65,12 @@ export default function CreateWorkspaceModal({
     try {
       const result = await dispatch(
         createNewWorkspace({
-          data: { name, description: description || undefined, icon, accentColor },
+          data: {
+            name,
+            description: description || undefined,
+            icon,
+            accentColor,
+          },
           token,
         }),
       ).unwrap();
@@ -65,7 +83,8 @@ export default function CreateWorkspaceModal({
       onClose();
       router.push(`/dashboard/${result.id}`);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Something went wrong.";
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
       toast.error("Failed to create workspace", {
         description: message,
       });

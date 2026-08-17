@@ -54,7 +54,12 @@ export async function getWorkspaces(token: string): Promise<Workspace[]> {
 }
 
 export async function createWorkspace(
-  data: { name: string; description?: string; icon?: string; accentColor?: string },
+  data: {
+    name: string;
+    description?: string;
+    icon?: string;
+    accentColor?: string;
+  },
   token: string,
 ): Promise<Workspace> {
   const res = await fetch(`${API_URL}/workspaces`, {
@@ -69,7 +74,10 @@ export async function createWorkspace(
   return res.json();
 }
 
-export async function deleteWorkspace(id: number, token: string): Promise<void> {
+export async function deleteWorkspace(
+  id: number,
+  token: string,
+): Promise<void> {
   const res = await fetch(`${API_URL}/workspaces/${id}`, {
     method: "DELETE",
     headers: authHeaders(token),

@@ -9,7 +9,9 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchWorkspaces } from "@/store/workspaces-slice";
 
 export default function DashboardPage() {
-  const { isAuthenticated, token, hydrated } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, token, hydrated } = useAppSelector(
+    (state) => state.auth,
+  );
   const { loading } = useAppSelector((state) => state.workspaces);
   const dispatch = useAppDispatch();
   const router = useRouter();
