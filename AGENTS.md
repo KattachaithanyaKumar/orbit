@@ -11,6 +11,11 @@ This project uses [opencode skills](https://github.com/anthropics/skills). Insta
 
 Use these skills proactively when the task matches, don't wait to be asked.
 
+- **Every change** must go through a branch + PR, never push directly to `main`
+- **PRs target `main` only** — all pull requests must be created against the `main` branch
+- Commit messages should be concise and descriptive
+- Always run lint/typecheck before pushing if available
+
 ## Stack
 
 | Layer        | Tech                                                                                                                                                                                                  |

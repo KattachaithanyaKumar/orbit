@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { createNewWorkspace } from "../../store/workspaces-slice";
+import {
+  createNewWorkspace,
+  setActiveWorkspace,
+} from "../../store/workspaces-slice";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +19,18 @@ interface CreateWorkspaceModalProps {
 }
 
 const EMOJI_OPTIONS = [
-  "📁", "🚀", "💡", "🎯", "🎨", "🏠",
-  "📝", "🔬", "🎮", "🌟", "📊", "🛠️",
+  "📁",
+  "🚀",
+  "💡",
+  "🎯",
+  "🎨",
+  "🏠",
+  "📝",
+  "🔬",
+  "🎮",
+  "🌟",
+  "📊",
+  "🛠️",
 ];
 
 const COLOR_OPTIONS = [
@@ -40,6 +54,7 @@ export default function CreateWorkspaceModal({
   const [accentColor, setAccentColor] = useState("#6366f1");
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const token = useAppSelector((state) => state.auth.token);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,21 +63,30 @@ export default function CreateWorkspaceModal({
     setLoading(true);
 
     try {
-      await dispatch(
+      const result = await dispatch(
         createNewWorkspace({
-          data: { name, description: description || undefined, icon, accentColor },
+          data: {
+            name,
+            description: description || undefined,
+            icon,
+            accentColor,
+          },
           token,
         }),
       ).unwrap();
+      dispatch(setActiveWorkspace(result.id));
       toast.success("Workspace created!", { description: name });
       setName("");
       setDescription("");
       setIcon("📁");
       setAccentColor("#6366f1");
       onClose();
-    } catch (err: any) {
+      router.push(`/dashboard/${result.id}`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong.";
       toast.error("Failed to create workspace", {
-        description: err.message || "Something went wrong.",
+        description: message,
       });
     } finally {
       setLoading(false);
