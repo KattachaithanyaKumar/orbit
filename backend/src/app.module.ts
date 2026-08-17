@@ -7,9 +7,11 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { FoldersModule } from './folders/folders.module';
+import { FilesModule } from './files/files.module';
 import { User } from './users/entities/user.entity';
 import { Workspace } from './workspaces/entities/workspace.entity';
 import { Folder } from './folders/entities/folder.entity';
+import { File } from './files/entities/file.entity';
 
 @Module({
   imports: [
@@ -24,7 +26,7 @@ import { Folder } from './folders/entities/folder.entity';
         username: config.get('DB_USERNAME', 'root'),
         password: config.get('DB_PASSWORD', 'root'),
         database: config.get('DB_DATABASE', 'orbit'),
-        entities: [User, Workspace, Folder],
+        entities: [User, Workspace, Folder, File],
         synchronize: true,
       }),
     }),
@@ -32,6 +34,7 @@ import { Folder } from './folders/entities/folder.entity';
     AuthModule,
     WorkspacesModule,
     FoldersModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

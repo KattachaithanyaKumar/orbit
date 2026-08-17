@@ -144,3 +144,107 @@ export async function deleteFolder(
     throw new Error(data.message || "Failed to delete folder");
   }
 }
+
+export interface FileItem {
+  id: number;
+  name: string;
+  content: unknown | null;
+  position: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function getFiles(
+  workspaceId: number,
+  folderId: number,
+  token: string,
+): Promise<FileItem[]> {
+  const res = await fetch(
+    `${API_URL}/workspaces/${workspaceId}/folders/${folderId}/files`,
+    { headers: authHeaders(token) },
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to fetch files");
+  }
+  return res.json();
+}
+
+export async function createFile(
+  workspaceId: number,
+  folderId: number,
+  data: { name: string },
+  token: string,
+): Promise<FileItem> {
+  const res = await fetch(
+    `${API_URL}/workspaces/${workspaceId}/folders/${folderId}/files`,
+    {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify(data),
+    },
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to create file");
+  }
+  return res.json();
+}
+
+export async function getFile(
+  workspaceId: number,
+  folderId: number,
+  fileId: number,
+  token: string,
+): Promise<FileItem> {
+  const res = await fetch(
+    `${API_URL}/workspaces/${workspaceId}/folders/${folderId}/files/${fileId}`,
+    { headers: authHeaders(token) },
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to fetch file");
+  }
+  return res.json();
+}
+
+export async function updateFile(
+  workspaceId: number,
+  folderId: number,
+  fileId: number,
+  data: { name?: string; content?: unknown },
+  token: string,
+): Promise<FileItem> {
+  const res = await fetch(
+    `${API_URL}/workspaces/${workspaceId}/folders/${folderId}/files/${fileId}`,
+    {
+      method: "PATCH",
+      headers: authHeaders(token),
+      body: JSON.stringify(data),
+    },
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to update file");
+  }
+  return res.json();
+}
+
+export async function deleteFile(
+  workspaceId: number,
+  folderId: number,
+  fileId: number,
+  token: string,
+): Promise<void> {
+  const res = await fetch(
+    `${API_URL}/workspaces/${workspaceId}/folders/${folderId}/files/${fileId}`,
+    {
+      method: "DELETE",
+      headers: authHeaders(token),
+    },
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to delete file");
+  }
+}
