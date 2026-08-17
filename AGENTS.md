@@ -16,5 +16,6 @@
 ## Rules
 
 - **Every change** must go through a branch + PR, never push directly to `main`
+- **PRs target `main` only** — all pull requests must be created against the `main` branch
 - Commit messages should be concise and descriptive
 - Always run lint/typecheck before pushing if available

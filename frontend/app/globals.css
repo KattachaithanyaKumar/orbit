@@ -86,3 +86,22 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Sonner toast overrides — monochrome theme */
+[data-sonner-toaster] {
+  --normal-bg: var(--card);
+  --normal-border: var(--border);
+  --normal-text: var(--foreground);
+  --success-bg: var(--card);
+  --success-border: var(--border);
+  --success-text: var(--foreground);
+  --error-bg: var(--card);
+  --error-border: var(--border);
+  --error-text: var(--foreground);
+  --info-bg: var(--card);
+  --info-border: var(--border);
+  --info-text: var(--foreground);
+  --warning-bg: var(--card);
+  --warning-border: var(--border);
+  --warning-text: var(--foreground);
+}
