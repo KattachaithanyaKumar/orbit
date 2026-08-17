@@ -4,8 +4,10 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Folder } from '../../folders/entities/folder.entity';
 
 @Entity('workspaces')
 export class Workspace {
@@ -26,6 +28,9 @@ export class Workspace {
 
   @ManyToOne(() => User, (user) => user.workspaces)
   owner: User;
+
+  @OneToMany(() => Folder, (folder) => folder.workspace)
+  folders: Folder[];
 
   @CreateDateColumn()
   createdAt: Date;
