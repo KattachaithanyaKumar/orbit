@@ -3,6 +3,8 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -10,54 +12,58 @@ import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectRepository(User)
+    private usersRepo: Repository<User>,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<Omit<User, 'password'>> {
-    const exists = this.users.find((u) => u.email === createUserDto.email);
+    const exists = await this.usersRepo.findOne({
+      where: { email: createUserDto.email },
+    });
     if (exists) {
       throw new ConflictException('Email already in use');
     }
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const user: User = {
-      id: this.idCounter++,
+    const user = this.usersRepo.create({
       email: createUserDto.email,
       password: hashedPassword,
-      createdAt: new Date(),
-    };
-    this.users.push(user);
+    });
+    const saved = await this.usersRepo.save(user);
 
-    const { password, ...result } = user;
+    const { password, ...result } = saved;
     return result;
   }
 
-  async findByEmail(email: string): Promise<User | undefined> {
-    return this.users.find((u) => u.email === email);
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersRepo.findOne({ where: { email } });
   }
 
-  findAll() {
-    return this.users.map(({ password, ...user }) => user);
+  async findAll() {
+    const users = await this.usersRepo.find();
+    return users.map(({ password, ...user }) => user);
   }
 
-  findOne(id: number) {
-    const user = this.users.find((u) => u.id === id);
+  async findOne(id: number) {
+    const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
     const { password, ...result } = user;
     return result;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    const user = this.users.find((u) => u.id === id);
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.usersRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
     Object.assign(user, updateUserDto);
-    const { password, ...result } = user;
+    const saved = await this.usersRepo.save(user);
+    const { password, ...result } = saved;
     return result;
   }
 
-  remove(id: number) {
-    const index = this.users.findIndex((u) => u.id === id);
-    if (index === -1) throw new NotFoundException('User not found');
-    this.users.splice(index, 1);
+  async remove(id: number) {
+    const user = await this.usersRepo.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    await this.usersRepo.remove(user);
   }
 }

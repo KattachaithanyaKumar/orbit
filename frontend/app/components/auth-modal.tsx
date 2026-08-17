@@ -1,9 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { signup, login } from "../../lib/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 type Mode = "signup" | "login";
 
@@ -23,8 +32,6 @@ export default function AuthModal({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  if (!open) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,55 +64,42 @@ export default function AuthModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="gap-0 p-0">
+        <DialogHeader className="px-6 pt-6 pb-0">
+          <DialogTitle className="text-lg">
+            {mode === "signup" ? "Create an account" : "Welcome back"}
+          </DialogTitle>
+          <DialogDescription>
+            {mode === "signup"
+              ? "Enter your email and password to get started."
+              : "Enter your credentials to continue."}
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="relative z-10 w-full max-w-sm rounded-2xl border border-border bg-background p-8 shadow-xl">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <X className="h-4 w-4" />
-        </button>
-
-        <h2 className="mb-1 text-xl font-semibold">
-          {mode === "signup" ? "Create an account" : "Welcome back"}
-        </h2>
-        <p className="mb-6 text-sm text-muted-foreground">
-          {mode === "signup"
-            ? "Enter your email and password to get started."
-            : "Enter your credentials to continue."}
-        </p>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-6 py-4">
+          <Input
             type="email"
             placeholder="Email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-10 rounded-lg border border-border bg-muted/50 px-3 text-sm outline-none transition-colors focus:border-primary"
           />
-          <input
+          <Input
             type="password"
             placeholder="Password"
             required
             minLength={mode === "signup" ? 6 : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-10 rounded-lg border border-border bg-muted/50 px-3 text-sm outline-none transition-colors focus:border-primary"
           />
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex h-10 items-center justify-center gap-2 rounded-lg bg-primary text-sm font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
-          >
+          <Button type="submit" disabled={loading} className="w-full mt-1">
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {mode === "signup" ? "Sign up" : "Log in"}
-          </button>
+          </Button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-muted-foreground">
+        <div className="border-t px-6 py-3 text-center text-sm text-muted-foreground">
           {mode === "signup" ? (
             <>
               Already have an account?{" "}
@@ -127,8 +121,8 @@ export default function AuthModal({
               </button>
             </>
           )}
-        </p>
-      </div>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
