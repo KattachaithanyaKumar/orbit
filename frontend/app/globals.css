@@ -9,6 +9,7 @@
   --muted-foreground: #6b6b6b;
   --border: #e0e0e0;
   --selection-bg: rgba(35, 131, 226, 0.2);
+  --glow: rgba(35, 131, 226, 0.15);
 }
 
 .dark {
@@ -20,6 +21,7 @@
   --muted-foreground: #9b9a97;
   --border: #373737;
   --selection-bg: rgba(82, 156, 202, 0.2);
+  --glow: rgba(82, 156, 202, 0.12);
 }
 
 @theme inline {
@@ -31,6 +33,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-selection-bg: var(--selection-bg);
+  --color-glow: var(--glow);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
