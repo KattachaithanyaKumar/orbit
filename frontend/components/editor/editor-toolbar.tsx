@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { Editor } from "@tiptap/react";
+import { toast } from "sonner";
 import {
   Bold,
   Italic,
@@ -399,7 +400,16 @@ function ImagePopover({ editor }: { editor: Editor }) {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      if (!file.type.startsWith("image/")) return;
+      if (!file.type.startsWith("image/")) {
+        toast.error("Invalid file type", { description: "Please select an image file." });
+        return;
+      }
+
+      const maxSize = 1 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error("File too large", { description: "Image must be under 1MB." });
+        return;
+      }
 
       setUploading(true);
 
@@ -457,7 +467,7 @@ function ImagePopover({ editor }: { editor: Editor }) {
         />
         <TooltipPopup>Insert image</TooltipPopup>
       </Tooltip>
-      <PopoverPopup className="w-80">
+      <PopoverPopup className="w-80" sideOffset={12}>
         <div className="space-y-3">
           <div className="text-xs font-medium text-muted-foreground">
             Insert image
