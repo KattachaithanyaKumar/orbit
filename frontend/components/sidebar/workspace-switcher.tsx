@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Check, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -29,7 +29,7 @@ export default function WorkspaceSwitcher({
 }: WorkspaceSwitcherProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { workspaces, activeWorkspaceId } = useAppSelector(
+  const { workspaces, activeWorkspaceId, loading } = useAppSelector(
     (state) => state.workspaces,
   );
   const token = useAppSelector((state) => state.auth.token);
@@ -40,6 +40,14 @@ export default function WorkspaceSwitcher({
   const [deleting, setDeleting] = useState(false);
 
   const activeWorkspace = workspaces.find((ws) => ws.id === activeWorkspaceId);
+
+  useEffect(() => {
+    if (workspaces.length > 0 && !activeWorkspace) {
+      const first = workspaces[0];
+      dispatch(setActiveWorkspace(first.id));
+      router.push(`/dashboard/${first.id}`);
+    }
+  }, [workspaces, activeWorkspace, dispatch, router]);
 
   const handleSelectWorkspace = (id: number) => {
     dispatch(setActiveWorkspace(id));
@@ -71,6 +79,14 @@ export default function WorkspaceSwitcher({
       setDeleting(false);
     }
   };
+
+  if (loading && workspaces.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-2">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
+      </div>
+    );
+  }
 
   if (!activeWorkspace) {
     return (

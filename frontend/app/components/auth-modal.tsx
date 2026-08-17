@@ -7,6 +7,10 @@ import { toast } from "sonner";
 import { signup, login } from "../../lib/api";
 import { useAppDispatch } from "../../store/hooks";
 import { setCredentials } from "../../store/auth-slice";
+import {
+  fetchWorkspaces,
+  setActiveWorkspace,
+} from "../../store/workspaces-slice";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,15 +42,16 @@ export default function AuthModal({
     setLoading(true);
 
     try {
+      let result: { token: string; user: { id: number; email: string } };
       if (mode === "signup") {
-        const data = await signup(email, password);
-        dispatch(setCredentials({ token: data.token, user: data.user }));
+        result = await signup(email, password);
+        dispatch(setCredentials({ token: result.token, user: result.user }));
         toast.success("Account created!", {
           description: "Welcome to Orbit.",
         });
       } else {
-        const data = await login(email, password);
-        dispatch(setCredentials({ token: data.token, user: data.user }));
+        result = await login(email, password);
+        dispatch(setCredentials({ token: result.token, user: result.user }));
         toast.success("Welcome back!", {
           description: "You're logged in.",
         });
@@ -54,7 +59,14 @@ export default function AuthModal({
       setEmail("");
       setPassword("");
       onClose();
-      router.push("/dashboard");
+
+      const workspaces = await dispatch(fetchWorkspaces(result.token)).unwrap();
+      if (workspaces.length > 0) {
+        dispatch(setActiveWorkspace(workspaces[0].id));
+        router.push(`/dashboard/${workspaces[0].id}`);
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Something went wrong.";
@@ -98,8 +110,8 @@ export default function AuthModal({
               : "Sign in to continue to Orbit."}
           </p>
 
-          <form onSubmit={handleSubmit} className="w-full space-y-4">
-            <div className="space-y-1.5">
+          <form onSubmit={handleSubmit} className="w-full space-y-5">
+            <div className="space-y-2">
               <label
                 htmlFor="email"
                 className="text-sm font-medium text-foreground"
@@ -113,11 +125,11 @@ export default function AuthModal({
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm"
+                className="h-10 w-full rounded-lg border border-input bg-transparent px-3 text-sm mt-2"
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label
                 htmlFor="password"
                 className="text-sm font-medium text-foreground"
@@ -137,12 +149,12 @@ export default function AuthModal({
                   minLength={mode === "signup" ? 6 : undefined}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-input bg-transparent px-3 pr-10 text-sm"
+                  className="h-10 w-full rounded-lg border border-input bg-transparent px-3 pr-10 text-sm mt-2"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground mt-1"
                   tabIndex={-1}
                 >
                   {showPassword ? (
