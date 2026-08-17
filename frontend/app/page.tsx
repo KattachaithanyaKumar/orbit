@@ -1,5 +1,7 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import {
   FolderTree,
   Terminal,
@@ -8,6 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import ThemeToggle from "./components/theme-toggle";
+import AuthModal from "./components/auth-modal";
 
 const features = [
   { label: "Multi-Folder Directories", icon: FolderTree },
@@ -17,18 +20,26 @@ const features = [
 ];
 
 export default function Home() {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"signup" | "login">("signup");
+
+  const openModal = (mode: "signup" | "login") => {
+    setModalMode(mode);
+    setModalOpen(true);
+  };
+
   return (
     <div className="relative flex min-h-screen flex-col items-center px-6 py-12">
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4">
         <span className="text-xl font-bold tracking-tight">orbit</span>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Link
-            href="/login"
+          <button
+            onClick={() => openModal("login")}
             className="rounded-full border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
           >
             Login
-          </Link>
+          </button>
         </div>
       </nav>
 
@@ -51,18 +62,18 @@ export default function Home() {
           seamlessly online or offline.
         </p>
         <div className="relative flex gap-4">
-          <Link
-            href="/signup"
+          <button
+            onClick={() => openModal("signup")}
             className="rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
           >
             Get started
-          </Link>
-          <Link
-            href="/login"
+          </button>
+          <button
+            onClick={() => openModal("login")}
             className="rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-muted"
           >
             Login
-          </Link>
+          </button>
         </div>
       </main>
 
@@ -87,6 +98,13 @@ export default function Home() {
           priority
         />
       </footer>
+
+      <AuthModal
+        open={modalOpen}
+        mode={modalMode}
+        onClose={() => setModalOpen(false)}
+        onSwitch={(m) => setModalMode(m)}
+      />
     </div>
   );
 }
