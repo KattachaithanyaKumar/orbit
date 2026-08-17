@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { LogOut, Settings } from "lucide-react";
-import ThemeToggle from "@/app/components/theme-toggle";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { logout } from "@/store/auth-slice";
 import WorkspaceSwitcher from "./workspace-switcher";
@@ -43,16 +42,12 @@ export default function Sidebar({ onOpenCreateModal }: SidebarProps) {
       )}
 
       <div className="mt-auto border-t border-border p-3">
-        <nav className="mb-2 space-y-1">
+        <nav className="space-y-1">
           <button className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
             <Settings className="h-4 w-4" />
             Settings
           </button>
         </nav>
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          <ThemeToggle />
-          <span className="text-sm text-muted-foreground">Theme</span>
-        </div>
       </div>
 
       <div className="border-t border-border p-3">
