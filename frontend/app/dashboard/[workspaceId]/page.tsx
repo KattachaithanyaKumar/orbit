@@ -49,6 +49,40 @@ function MemberAvatars({ emails }: { emails: string[] }) {
   );
 }
 
+function FileViewersIndicator({ viewers }: { viewers: { userId: number; email: string }[] }) {
+  if (viewers.length === 0) return null;
+
+  const shown = viewers.slice(0, 2);
+  const overflow = viewers.length - shown.length;
+
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span className="hidden sm:inline">Viewing:</span>
+      <div className="flex items-center -space-x-1.5">
+        {shown.map((viewer) => {
+          const initial = viewer.email?.charAt(0).toUpperCase() || "?";
+          const hue = [...viewer.email].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
+          return (
+            <div
+              key={viewer.userId}
+              title={viewer.email}
+              className="flex h-5 w-5 items-center justify-center rounded-full border border-background text-[9px] font-medium text-white"
+              style={{ backgroundColor: `hsl(${hue}, 55%, 45%)` }}
+            >
+              {initial}
+            </div>
+          );
+        })}
+        {overflow > 0 && (
+          <div className="flex h-5 w-5 items-center justify-center rounded-full border border-background bg-muted text-[9px] font-medium text-muted-foreground">
+            +{overflow}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function WorkspacePage() {
   const router = useRouter();
   const params = useParams();
@@ -66,6 +100,7 @@ export default function WorkspacePage() {
     "saved",
   );
   const [userRole, setUserRole] = useState<Role | null>(null);
+  const [fileViewers, setFileViewers] = useState<{ userId: number; email: string }[]>([]);
 
   useEffect(() => {
     if (hydrated && !isAuthenticated) {
@@ -126,6 +161,10 @@ export default function WorkspacePage() {
     setEditorTitle(title);
   }, []);
 
+  const handleViewersChange = useCallback((viewers: { userId: number; email: string }[]) => {
+    setFileViewers(viewers);
+  }, []);
+
   const displayTitle = editorTitle || activeFile?.name || "";
 
   if (!hydrated || !isAuthenticated) {
@@ -173,6 +212,7 @@ export default function WorkspacePage() {
                     ? "Save failed"
                     : "Saved"}
               </span>
+              <FileViewersIndicator viewers={fileViewers} />
             </>
           ) : workspace ? (
             <>
@@ -217,6 +257,7 @@ export default function WorkspacePage() {
               userRole={userRole}
               onStatusChange={handleStatusChange}
               onTitleChange={handleTitleChange}
+              onViewersChange={handleViewersChange}
             />
           ) : workspace ? (
             <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
