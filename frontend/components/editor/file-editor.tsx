@@ -26,6 +26,7 @@ interface FileEditorProps {
   userRole?: Role | null;
   onStatusChange?: (status: "saved" | "saving" | "error") => void;
   onTitleChange?: (title: string) => void;
+  onViewersChange?: (viewers: { userId: number; email: string }[]) => void;
 }
 
 function extractTitle(content: unknown): string {
@@ -88,6 +89,7 @@ interface EditableEditorProps {
   user?: { id: number };
   onStatusChange?: (status: "saved" | "saving" | "error") => void;
   onTitleChange?: (title: string) => void;
+  onViewersChange?: (viewers: { userId: number; email: string }[]) => void;
 }
 
 function EditableEditor({
@@ -97,6 +99,7 @@ function EditableEditor({
   user,
   onStatusChange,
   onTitleChange,
+  onViewersChange,
 }: EditableEditorProps) {
   const dispatch = useAppDispatch();
   const token = useAppSelector((state) => state.auth.token);
@@ -114,11 +117,17 @@ function EditableEditor({
     clearRemoteUpdate,
     broadcastCursor,
     broadcastFileUpdate,
+    fileViewers,
   } = useCollaboration({
     fileId: file.id,
+    workspaceId,
     userId: user?.id ?? 0,
     token: token ?? "",
   });
+
+  useEffect(() => {
+    onViewersChange?.(fileViewers);
+  }, [fileViewers, onViewersChange]);
 
   const debouncedSave = useCallback(
     (editorInstance: { getJSON: () => unknown }, currentFileId: number) => {
@@ -231,6 +240,7 @@ export default function FileEditor({
   userRole,
   onStatusChange,
   onTitleChange,
+  onViewersChange,
 }: FileEditorProps) {
   const user = useAppSelector((state) => state.auth.user);
 
@@ -250,6 +260,7 @@ export default function FileEditor({
       user={user ?? undefined}
       onStatusChange={onStatusChange}
       onTitleChange={onTitleChange}
+      onViewersChange={onViewersChange}
     />
   );
 }

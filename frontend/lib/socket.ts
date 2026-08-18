@@ -1,13 +1,15 @@
 import io from "socket.io-client";
 
-let socket: any = null;
+let socket: ReturnType<typeof io> | null = null;
+
+const SOCKET_URL =
+  process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000";
 
 export function initSocket(token: string) {
   if (!socket) {
-    socket = io(`http://localhost:4000`, {
-      auth: {
-        token,
-      },
+    socket = io(SOCKET_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"],
     });
   }
   return socket;

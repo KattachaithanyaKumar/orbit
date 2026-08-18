@@ -20,6 +20,14 @@ interface CursorData {
   docSize: number;
 }
 
+interface ConnectedUser {
+  userId: number;
+  email: string;
+  socketId: string;
+  workspaceIds: Set<number>;
+  activeFileId: number | null;
+}
+
 @WebSocketGateway({
   cors: {
     origin: process.env.CORS_ORIGIN || '*',
@@ -30,6 +38,8 @@ export class RealTimeGateway
 {
   @WebSocketServer()
   server: Server;
+
+  private connectedUsers = new Map<number, ConnectedUser>();
 
   constructor(
     private readonly jwtService: JwtService,
@@ -54,7 +64,19 @@ export class RealTimeGateway
       }
 
       socket.data.user = user;
-      this.server.emit('user-online', { userId: user.id });
+
+      this.connectedUsers.set(user.id, {
+        userId: user.id,
+        email: user.email,
+        socketId: socket.id,
+        workspaceIds: new Set(),
+        activeFileId: null,
+      });
+
+      this.server.emit('user-online', {
+        userId: user.id,
+        email: user.email,
+      });
     } catch {
       socket.disconnect();
     }
@@ -63,15 +85,84 @@ export class RealTimeGateway
   handleDisconnect(socket: Socket) {
     const user = socket.data.user;
     if (user) {
-      // Leave all file rooms
-      for (const room of socket.rooms) {
-        if (room.startsWith('file:')) {
-          socket.leave(room);
-          this.server.to(room).emit('cursor-remove', { userId: user.id });
+      const connectedUser = this.connectedUsers.get(user.id);
+
+      if (connectedUser) {
+        for (const workspaceId of connectedUser.workspaceIds) {
+          this.server.to(`workspace:${workspaceId}`).emit('user-offline', {
+            userId: user.id,
+            workspaceId,
+          });
         }
+
+        if (connectedUser.activeFileId !== null) {
+          const fileRoom = `file:${connectedUser.activeFileId}`;
+          socket.leave(fileRoom);
+          this.server.to(fileRoom).emit('user-left-file', {
+            userId: user.id,
+            fileId: connectedUser.activeFileId,
+          });
+          this.server.to(fileRoom).emit('cursor-remove', {
+            userId: user.id,
+          });
+        }
+
+        this.connectedUsers.delete(user.id);
       }
+
       this.server.emit('user-offline', { userId: user.id });
     }
+  }
+
+  @SubscribeMessage('workspace-join')
+  handleWorkspaceJoin(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { workspaceId: number },
+  ) {
+    const user = socket.data.user;
+    if (!user) return;
+
+    const room = `workspace:${data.workspaceId}`;
+    socket.join(room);
+
+    const connectedUser = this.connectedUsers.get(user.id);
+    if (connectedUser) {
+      connectedUser.workspaceIds.add(data.workspaceId);
+    }
+
+    const membersInWorkspace = this.getWorkspaceMembers(data.workspaceId);
+    socket.emit('workspace-members', {
+      workspaceId: data.workspaceId,
+      members: membersInWorkspace,
+    });
+
+    socket.to(room).emit('user-joined-workspace', {
+      userId: user.id,
+      email: user.email,
+      workspaceId: data.workspaceId,
+    });
+  }
+
+  @SubscribeMessage('workspace-leave')
+  handleWorkspaceLeave(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { workspaceId: number },
+  ) {
+    const user = socket.data.user;
+    if (!user) return;
+
+    const room = `workspace:${data.workspaceId}`;
+    socket.leave(room);
+
+    const connectedUser = this.connectedUsers.get(user.id);
+    if (connectedUser) {
+      connectedUser.workspaceIds.delete(data.workspaceId);
+    }
+
+    socket.to(room).emit('user-left-workspace', {
+      userId: user.id,
+      workspaceId: data.workspaceId,
+    });
   }
 
   @SubscribeMessage('file-open')
@@ -79,10 +170,26 @@ export class RealTimeGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { fileId: number },
   ) {
+    const user = socket.data.user;
+    if (!user) return;
+
     const room = `file:${data.fileId}`;
     socket.join(room);
+
+    const connectedUser = this.connectedUsers.get(user.id);
+    if (connectedUser) {
+      connectedUser.activeFileId = data.fileId;
+    }
+
+    const viewersInFile = this.getFileViewers(data.fileId);
+    socket.emit('file-viewers', {
+      fileId: data.fileId,
+      viewers: viewersInFile,
+    });
+
     socket.to(room).emit('user-entered-file', {
-      userId: socket.data.user?.id,
+      userId: user.id,
+      email: user.email,
       fileId: data.fileId,
     });
   }
@@ -92,14 +199,23 @@ export class RealTimeGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { fileId: number },
   ) {
+    const user = socket.data.user;
+    if (!user) return;
+
     const room = `file:${data.fileId}`;
     socket.leave(room);
+
+    const connectedUser = this.connectedUsers.get(user.id);
+    if (connectedUser) {
+      connectedUser.activeFileId = null;
+    }
+
     socket.to(room).emit('user-left-file', {
-      userId: socket.data.user?.id,
+      userId: user.id,
       fileId: data.fileId,
     });
     socket.to(room).emit('cursor-remove', {
-      userId: socket.data.user?.id,
+      userId: user.id,
     });
   }
 
@@ -113,12 +229,15 @@ export class RealTimeGateway
       name?: string;
     },
   ) {
+    const user = socket.data.user;
+    if (!user) return;
+
     const room = `file:${data.fileId}`;
     socket.to(room).emit('file-updated', {
       fileId: data.fileId,
       content: data.content,
       name: data.name,
-      userId: socket.data.user?.id,
+      userId: user.id,
     });
   }
 
@@ -127,16 +246,43 @@ export class RealTimeGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: CursorData,
   ) {
+    const user = socket.data.user;
+    if (!user) return;
+
     const room = `file:${data.fileId}`;
     socket.to(room).emit('cursor-moved', {
       fileId: data.fileId,
-      userId: socket.data.user?.id,
-      userName:
-        socket.data.user?.email?.split('@')[0] ||
-        `User ${socket.data.user?.id}`,
+      userId: user.id,
+      userName: user.email?.split('@')[0] || `User ${user.id}`,
       userColor: data.userColor,
       offset: data.offset,
       docSize: data.docSize,
     });
+  }
+
+  private getWorkspaceMembers(workspaceId: number) {
+    const members: { userId: number; email: string }[] = [];
+    for (const [, connectedUser] of this.connectedUsers) {
+      if (connectedUser.workspaceIds.has(workspaceId)) {
+        members.push({
+          userId: connectedUser.userId,
+          email: connectedUser.email,
+        });
+      }
+    }
+    return members;
+  }
+
+  private getFileViewers(fileId: number) {
+    const viewers: { userId: number; email: string }[] = [];
+    for (const [, connectedUser] of this.connectedUsers) {
+      if (connectedUser.activeFileId === fileId) {
+        viewers.push({
+          userId: connectedUser.userId,
+          email: connectedUser.email,
+        });
+      }
+    }
+    return viewers;
   }
 }
