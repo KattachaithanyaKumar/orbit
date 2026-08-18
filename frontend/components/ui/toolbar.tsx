@@ -12,7 +12,7 @@ function Toolbar({
       role="toolbar"
       data-slot="toolbar"
       className={cn(
-        "flex flex-wrap items-center gap-0.5 border-b border-border px-3 py-1.5",
+        "flex flex-wrap items-center gap-0.5 border-b border-border px-1.5 py-1 sm:px-3 sm:py-1.5",
         className
       )}
       {...props}

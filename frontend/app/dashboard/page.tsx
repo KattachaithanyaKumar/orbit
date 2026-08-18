@@ -1,12 +1,11 @@
 "use client";
 
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FolderTree } from "lucide-react";
+import { FolderTree, Menu } from "lucide-react";
 import Sidebar from "@/components/sidebar/sidebar";
 import ThemeToggle from "@/app/components/theme-toggle";
 import CreateWorkspaceModal from "@/app/components/create-workspace-modal";
-import CollaboratorsModal from "@/app/components/collaborators-modal";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchWorkspaces } from "@/store/workspaces-slice";
 
@@ -17,8 +16,8 @@ export default function DashboardPage() {
   const { loading } = useAppSelector((state) => state.workspaces);
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { workspaceId } = useParams();
   const [modalOpen, setModalOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (hydrated && !isAuthenticated) {
@@ -42,29 +41,37 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar onOpenCreateModal={() => setModalOpen(true)} />
+      <Sidebar
+        onOpenCreateModal={() => setModalOpen(true)}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex flex-1 flex-col overflow-auto">
+        <header className="flex h-14 shrink-0 items-center justify-end border-b border-border px-3 sm:px-6">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="mr-auto rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <ThemeToggle />
+        </header>
+
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
           </div>
         ) : (
-          <div className="flex flex-col h-full">
-            <header className="flex h-14 items-center justify-end border-b border-border px-6">
-              <ThemeToggle />
-            </header>
-
-            <div className="flex flex-1 flex-col items-center justify-center text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-                <FolderTree className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h2 className="mb-1 text-lg font-semibold">Select a workspace</h2>
-              <p className="max-w-sm text-sm text-muted-foreground">
-                Choose a workspace from the sidebar or create a new one to get
-                started.
-              </p>
+          <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
+              <FolderTree className="h-8 w-8 text-muted-foreground" />
             </div>
+            <h2 className="mb-1 text-lg font-semibold">Select a workspace</h2>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              Choose a workspace from the sidebar or create a new one to get
+              started.
+            </p>
           </div>
         )}
       </main>
