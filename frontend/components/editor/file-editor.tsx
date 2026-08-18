@@ -72,7 +72,7 @@ function ReadOnlyViewer({ content }: { content: unknown }) {
   if (!html) return null;
 
   return (
-    <div className="flex-1 overflow-y-auto px-12 py-8">
+    <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-12 sm:py-8">
       <div
         className="tiptap prose prose-sm max-w-none text-foreground [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:my-2 [&_ul]:my-2 [&_ul]:pl-6 [&_ul]:list-disc [&_ol]:my-2 [&_ol]:pl-6 [&_ol]:list-decimal [&_li]:my-0.5 [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_pre]:bg-muted [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:my-3 [&_pre]:overflow-x-auto [&_code]:bg-muted [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_hr]:my-6 [&_hr]:border-border [&_img]:max-w-full [&_img]:rounded-lg"
         dangerouslySetInnerHTML={{ __html: html }}
@@ -173,7 +173,7 @@ function EditableEditor({
     },
     editorProps: {
       attributes: {
-        class: "tiptap focus:outline-none min-h-full px-12 py-8",
+        class: "tiptap focus:outline-none min-h-full px-4 py-6 sm:px-12 sm:py-8",
       },
     },
   });

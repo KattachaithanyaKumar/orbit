@@ -2,7 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { FolderTree, FileText, Search } from "lucide-react";
+import { FolderTree, FileText, Search, Menu } from "lucide-react";
 import Sidebar from "@/components/sidebar/sidebar";
 import ThemeToggle from "@/app/components/theme-toggle";
 import CreateWorkspaceModal from "@/app/components/create-workspace-modal";
@@ -21,7 +21,7 @@ const ROLE_COLORS: Record<Role, string> = {
 };
 
 function MemberAvatars({ emails }: { emails: string[] }) {
-  const shown = emails.slice(0, 5);
+  const shown = emails.slice(0, 3);
   const overflow = emails.length - shown.length;
 
   return (
@@ -61,6 +61,7 @@ export default function WorkspacePage() {
   const { activeFile, activeFolderId } = useAppSelector((state) => state.files);
   const { members } = useAppSelector((state) => state.collaborators);
   const [modalOpen, setModalOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">(
     "saved",
   );
@@ -144,10 +145,19 @@ export default function WorkspacePage() {
         onOpenCreateModal={() => setModalOpen(true)}
         workspaceId={workspaceId}
         userRole={userRole}
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
       <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-6">
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3 sm:gap-3 sm:px-6">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
           {activeFile ? (
             <>
               <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -167,25 +177,27 @@ export default function WorkspacePage() {
           ) : workspace ? (
             <>
               <span className="text-xl">{workspace.icon}</span>
-              <h1 className="text-lg font-semibold">{workspace.name}</h1>
+              <h1 className="truncate text-lg font-semibold sm:text-lg">{workspace.name}</h1>
               {workspace.description && (
-                <span className="text-sm text-muted-foreground">
+                <span className="hidden truncate text-sm text-muted-foreground sm:inline">
                   {workspace.description}
                 </span>
               )}
             </>
           ) : null}
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-3">
             {userRole && (
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[userRole]}`}>
+              <span className={`hidden rounded-full px-2.5 py-0.5 text-xs font-medium sm:inline-block ${ROLE_COLORS[userRole]}`}>
                 {userRole}
               </span>
             )}
             {memberEmails.length > 0 && (
-              <MemberAvatars emails={memberEmails} />
+              <div className="hidden sm:block">
+                <MemberAvatars emails={memberEmails} />
+              </div>
             )}
             <ThemeToggle />
-            <button className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            <button className="hidden items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex">
               <Search className="h-4 w-4" />
               Search
             </button>
@@ -207,7 +219,7 @@ export default function WorkspacePage() {
               onTitleChange={handleTitleChange}
             />
           ) : workspace ? (
-            <div className="flex flex-1 flex-col items-center justify-center text-center">
+            <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
               <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
                 <FolderTree className="h-8 w-8 text-muted-foreground" />
               </div>
