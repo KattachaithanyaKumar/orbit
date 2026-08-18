@@ -1,6 +1,6 @@
 # Orbit — Agent Development Guidelines
 
-> **Priority instruction:** Do not rebuild existing authentication or project setup. Start from the current dashboard and build the Workspace → Pages → Blocks foundation.
+> **Priority instruction:** Do not rebuild existing authentication or project setup. Start from the current dashboard and build the Workspace → Folders → Files foundation with realtime collaboration.
 
 ## Skills
 
@@ -34,7 +34,7 @@ Follow the **existing** repo structure — do not reorganize it. Inspect before 
 ```
 orbit/
 ├── frontend/   (app, components, features, hooks, lib, stores, types)
-├── backend/    (src/{auth,users,workspaces,pages,blocks,comments,files,permissions,realtime}, prisma)
+├── backend/    (src/{auth,users,workspaces,folders,files,permissions,realtime})
 ├── AGENTS.md
 └── README.md
 ```
@@ -52,26 +52,26 @@ JWT auth is already implemented. Before touching it: inspect existing implementa
 ## Current Priority (build in this order)
 
 1. **Dashboard** — workspace shell, sidebar, header, user menu, logout, empty state
-2. **Workspace** — model (`User → WorkspaceMember → Workspace`, roles: OWNER/ADMIN/MEMBER/GUEST)
-3. **Pages** — hierarchy via `Page.parentId`, CRUD, nested pages, sidebar tree
-4. **Block Editor** — block model (`Block.parentId`, `type`, `content: Json`, `position`), Tiptap integration
-5. **Realtime collaboration** (later, see progression below)
-6. **Sharing** — permissions, comments, mentions
+2. **Workspace** — model (`User → WorkspaceMember → Workspace`, roles: OWNER/ADMIN/EDITOR/VIEWER)
+3. **Folders** — flat folder model per workspace, CRUD, sidebar tree
+4. **Files** — files within folders, content stored as JSON (Tiptap document), CRUD
+5. **Realtime collaboration** — Socket.IO connection, file rooms, cursor sync, presence
+6. **Collaborators** — workspace-level permissions, member management (roles, invite, remove)
 7. **Advanced collab** — Yjs/CRDT, Redis (only when required)
 8. **Advanced features** — databases, templates, search, version history
 
-Don't jump ahead — establish workspace/page/block model before realtime.
+Don't jump ahead — establish workspace/folder/file model before realtime.
 
-### Realtime Progression (future)
+### Realtime Progression
 
-Socket connection → page rooms (`page:123`) → block CRUD events → presence → cursor sync → optimistic updates → Yjs/CRDT → Redis (multi-instance only).
+Socket connection → file rooms (`file:123`) → cursor sync → presence → optimistic updates → Yjs/CRDT → Redis (multi-instance only).
 
-Server must always validate auth server-side. Never trust client-provided `userId`, `workspaceId`, `pageId`, `blockId`, or `permissions`.
+Server must always validate auth server-side. Never trust client-provided `userId`, `workspaceId`, `folderId`, `fileId`, or `permissions`.
 
 ## API Flow
 
 ```
-Next.js → REST → NestJS → Prisma → MySQL
+Next.js → REST → NestJS → TypeORM → MySQL
 ```
 
 Frontend never touches MySQL directly. Business logic lives in NestJS.
@@ -82,7 +82,7 @@ Frontend never touches MySQL directly. Business logic lives in NestJS.
 DATABASE_URL="mysql://USER:PASSWORD@localhost:3306/orbit"
 ```
 
-Use Prisma migrations (`npx prisma migrate dev`, `npx prisma generate`, `npx prisma studio`). Never commit `.env` or credentials. Don't hand-edit schema outside migrations.
+Use TypeORM entities (already configured). Never commit `.env` or credentials. Use `synchronize: true` only in development.
 
 ## Code Standards
 
