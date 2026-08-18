@@ -1,132 +1,111 @@
-"use client"
+import { Plugin, PluginKey, EditorState } from 'prosemirror-state';
+import { Decoration, DecorationSet } from 'prosemirror-view';
+import { EditorView } from 'prosemirror-view';
+import { Extension } from '@tiptap/core';
+import type { Node as ProseMirrorNode } from 'prosemirror-model';
 
-import { useEffect, useRef, useCallback } from "react"
-import { useSelector } from "react-redux"
-import { getSocket, initSocket } from "@/lib/socket"
-
-interface RemoteCursor {
-  userId: number
-  email: string
-  x: number
-  y: number
+export interface RemoteCursor {
+  userId: number;
+  userName: string;
+  userColor: string;
+  offset: number;
+  docSize: number;
 }
 
-interface RemoteCursorsExtensionProps {
-  userId: number
-  userEmail: string
+interface CursorsPluginState {
+  cursors: RemoteCursor[];
+  decorations: DecorationSet;
 }
 
-export function useRemoteCursors({
-  userId,
-  userEmail,
-}: RemoteCursorsExtensionProps) {
-  const token = useSelector((state: any) => state.auth.token)
-  const editorRef = useRef<any>(null)
-  const cursorPositionRef = useRef({ x: 0, y: 0 })
-  const throttledBroadcastRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+const remoteCursorsPluginKey = new PluginKey<CursorsPluginState>('remoteCursors');
 
-  // Initialize socket if not already initialized
-  useEffect(() => {
-    if (token) {
-      initSocket(token)
-    }
-  }, [token])
+function buildDecorations(cursors: RemoteCursor[], doc: ProseMirrorNode): DecorationSet {
+  const decorations: Decoration[] = [];
+  const docSize = doc.content.size;
 
-  // Broadcast cursor position
-  const broadcastCursor = useCallback((editor: any) => {
-    if (!token) return
+  if (docSize === 0) return DecorationSet.empty;
 
-    if (throttledBroadcastRef.current) clearTimeout(throttledBroadcastRef.current)
+  for (const cursor of cursors) {
+    if (cursor.docSize !== docSize) continue;
 
-    throttledBroadcastRef.current = setTimeout(() => {
-      const selection = editor?.state?.selection
-      if (!selection?.empty) {
-        const { from } = selection
-        const nodePos = editor?.state?.doc?.resolve(from)
-        if (nodePos && nodePos?.nodeAt) {
-          const node = nodePos?.nodeAt(0)
-          if (node) {
-            const top = node?.top
-            const left = node?.node?.left
+    const safeOffset = Math.max(1, Math.min(cursor.offset, docSize - 1));
 
-            const socket = getSocket()
-            if (socket?.connected) {
-              socket.emit('cursor-update', {
-                workspaceId: 1,
-                cursorX: left || 0,
-                cursorY: top || 0,
-              })
-            }
-          }
-        }
+    decorations.push(
+      Decoration.widget(
+        safeOffset,
+        () => {
+          const cursorEl = document.createElement('span');
+          cursorEl.className = 'remote-cursor';
+          cursorEl.setAttribute('data-user-id', String(cursor.userId));
+          cursorEl.style.borderLeftColor = cursor.userColor;
+          cursorEl.style.position = 'relative';
+          cursorEl.style.display = 'inline';
+          cursorEl.style.pointerEvents = 'none';
+
+          const label = document.createElement('span');
+          label.className = 'remote-cursor-label';
+          label.textContent = cursor.userName;
+          label.style.background = cursor.userColor;
+          cursorEl.appendChild(label);
+
+          return cursorEl;
+        },
+        { side: -1, inclusive: true },
+      ),
+    );
+  }
+
+  return DecorationSet.create(doc, decorations);
+}
+
+export const remoteCursorsPlugin = new Plugin<CursorsPluginState>({
+  key: remoteCursorsPluginKey,
+  state: {
+    init(): CursorsPluginState {
+      return { cursors: [], decorations: DecorationSet.empty };
+    },
+    apply(tr, prev, _oldState, newState) {
+      const meta = tr.getMeta(remoteCursorsPluginKey);
+      if (meta && meta.cursors) {
+        return {
+          cursors: meta.cursors,
+          decorations: buildDecorations(meta.cursors, newState.doc),
+        };
       }
-    }, 100)
-  }, [token])
-
-  // Handle incoming cursor updates from other users
-  useEffect(() => {
-    const socket = getSocket()
-    if (!socket) return
-
-    socket.on('cursor-update', (data: { userId: number; email: string; cursorX: number; cursorY: number }) => {
-      // Store remote cursor position for rendering
-    })
-
-    return () => {
-      socket.off('cursor-update')
-    }
-  }, [])
-
-  // Create ProseMirror decorations for remote cursors
-  useEffect(() => {
-    if (!editorRef.current) return
-
-    const socket = getSocket()
-    if (!socket) return
-
-    const onUpdate = () => {
-      // Render own cursor position
-      const ownPos = editorRef.current?.state?.selection
-      if (ownPos) {
-        const coord = editorRef.current?.coords?.from(ownPos.from)
-        if (coord) {
-          const span = document.createElement('span')
-          span.className = `orbit-cursor orbit-cursor-${userId}`
-          span.style.cssText = `
-            position: absolute;
-            left: ${coord.left}px;
-            top: ${coord.top}px;
-            width: 2px;
-            height: 1.2em;
-            background-color: #3b82f6;
-            z-index: 9999;
-            pointer-events: none;
-          `
-          const viewDom = editorRef.current.view.dom
-          if (viewDom) {
-            viewDom.appendChild(span)
-            setTimeout(() => span?.remove?.(), 1000)
-          }
-        }
+      // Doc changed — rebuild in case docSize now matches
+      if (prev.cursors.length > 0 && tr.docChanged) {
+        return {
+          cursors: prev.cursors,
+          decorations: buildDecorations(prev.cursors, newState.doc),
+        };
       }
+      // Remap existing decorations
+      return {
+        cursors: prev.cursors,
+        decorations: prev.decorations.map(tr.mapping, tr.doc),
+      };
+    },
+  },
+  props: {
+    decorations(state: EditorState): DecorationSet {
+      return remoteCursorsPluginKey.getState(state)?.decorations ?? DecorationSet.empty;
+    },
+  },
+});
 
-      editorRef.current?.setDecorations?.([])
-    }
-
-    socket.on('cursor-update', onUpdate)
-    return () => {
-      socket.off('cursor-update', onUpdate)
-    }
-  }, [userId])
-
-  return null
+export function setRemoteCursors(
+  view: EditorView,
+  cursors: RemoteCursor[],
+) {
+  const tr = view.state.tr.setMeta(remoteCursorsPluginKey, { cursors });
+  view.dispatch(tr);
 }
 
-export default function RemoteCursorsExtension({
-  userId,
-  userEmail,
-}: RemoteCursorsExtensionProps) {
-  useRemoteCursors({ userId, userEmail })
-
-  return null
+export function RemoteCursorsExtension() {
+  return Extension.create({
+    name: 'remoteCursors',
+    addProseMirrorPlugins() {
+      return [remoteCursorsPlugin];
+    },
+  });
 }

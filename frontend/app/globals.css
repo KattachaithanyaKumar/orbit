@@ -301,30 +301,29 @@ body {
   background-color: var(--muted-foreground);
 }
 
-/* Cursor decorations */
-.orbit-cursor {
-  position: absolute;
-  border-radius: 50%;
-  z-index: 9999;
+/* Remote cursor decorations (ProseMirror widget) */
+.remote-cursor {
+  border-left: 2px solid;
+  margin-left: -1px;
+  margin-right: -1px;
   pointer-events: none;
-  font-size: 12px;
-  color: white;
-  font-weight: bold;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+  display: inline;
+  position: relative;
+  height: 1.2em;
+  vertical-align: text-bottom;
 }
 
-/* User name labels below cursors */
-.orbit-cursor-label {
+.remote-cursor-label {
   position: absolute;
-  bottom: -1.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--primary);
+  top: -1.4em;
+  left: -1px;
+  padding: 1px 5px;
+  border-radius: 3px 3px 3px 0;
   color: white;
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.4rem;
-  font-size: 0.7rem;
+  font-size: 11px;
+  line-height: 1.4;
   white-space: nowrap;
-  z-index: 9999;
   pointer-events: none;
+  font-weight: 500;
+  z-index: 10;
 }

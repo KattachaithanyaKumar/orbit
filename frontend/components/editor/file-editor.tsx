@@ -16,6 +16,8 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateFileContent } from "@/store/files-slice";
 import { FileItem, Role } from "@/lib/api";
 import EditorToolbar from "./editor-toolbar";
+import { RemoteCursorsExtension, setRemoteCursors } from "./remote-cursors";
+import { useCollaboration } from "@/hooks/use-collaboration";
 
 interface FileEditorProps {
   file: FileItem;
@@ -58,6 +60,7 @@ const editorExtensions = [
     HTMLAttributes: { class: "text-primary underline cursor-pointer" },
   }),
   Image.configure({ allowBase64: true }),
+  RemoteCursorsExtension(),
 ];
 
 function ReadOnlyViewer({ content }: { content: unknown }) {
@@ -82,6 +85,7 @@ interface EditableEditorProps {
   file: FileItem;
   workspaceId: number;
   folderId: number;
+  user?: { id: number };
   onStatusChange?: (status: "saved" | "saving" | "error") => void;
   onTitleChange?: (title: string) => void;
 }
@@ -90,6 +94,7 @@ function EditableEditor({
   file,
   workspaceId,
   folderId,
+  user,
   onStatusChange,
   onTitleChange,
 }: EditableEditorProps) {
@@ -97,13 +102,28 @@ function EditableEditor({
   const token = useAppSelector((state) => state.auth.token);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileRef = useRef(file);
+  const isRemoteUpdateRef = useRef(false);
 
   useEffect(() => {
     fileRef.current = file;
   });
 
+  const {
+    remoteCursors,
+    remoteFileUpdate,
+    clearRemoteUpdate,
+    broadcastCursor,
+    broadcastFileUpdate,
+  } = useCollaboration({
+    fileId: file.id,
+    userId: user?.id ?? 0,
+    token: token ?? "",
+  });
+
   const debouncedSave = useCallback(
-    (editorInstance: { getJSON: () => unknown }, fileId: number) => {
+    (editorInstance: { getJSON: () => unknown }, currentFileId: number) => {
+      if (isRemoteUpdateRef.current) return;
+
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
       }
@@ -119,11 +139,12 @@ function EditableEditor({
             updateFileContent({
               workspaceId,
               folderId,
-              fileId,
+              fileId: currentFileId,
               data: { content: json, name: title },
               token,
             }),
           ).unwrap();
+          broadcastFileUpdate(json, title);
           onStatusChange?.("saved");
         } catch (err: unknown) {
           onStatusChange?.("error");
@@ -137,7 +158,7 @@ function EditableEditor({
         }
       }, 1000);
     },
-    [dispatch, token, workspaceId, folderId, onStatusChange, onTitleChange],
+    [dispatch, token, workspaceId, folderId, onStatusChange, onTitleChange, broadcastFileUpdate],
   );
 
   const editor = useEditor({
@@ -146,6 +167,10 @@ function EditableEditor({
     onUpdate: ({ editor: editorInstance }) => {
       debouncedSave(editorInstance, fileRef.current.id);
     },
+    onSelectionUpdate: ({ editor: editorInstance }) => {
+      const { from } = editorInstance.state.selection;
+      broadcastCursor(from, editorInstance.state.doc.content.size);
+    },
     editorProps: {
       attributes: {
         class: "tiptap focus:outline-none min-h-full px-12 py-8",
@@ -153,12 +178,29 @@ function EditableEditor({
     },
   });
 
+  // Update remote cursor decorations
+  useEffect(() => {
+    if (!editor?.view) return;
+    setRemoteCursors(editor.view, remoteCursors);
+  }, [remoteCursors, editor]);
+
+  // Apply remote file updates
+  useEffect(() => {
+    if (!editor || !remoteFileUpdate) return;
+    isRemoteUpdateRef.current = true;
+    editor.commands.setContent(remoteFileUpdate.content || "");
+    isRemoteUpdateRef.current = false;
+    clearRemoteUpdate();
+  }, [remoteFileUpdate, editor, clearRemoteUpdate]);
+
   useEffect(() => {
     if (editor && file.id !== fileRef.current.id) {
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
       }
+      isRemoteUpdateRef.current = true;
       editor.commands.setContent(file.content || "");
+      isRemoteUpdateRef.current = false;
     }
   }, [file.id, file.content, editor]);
 
@@ -190,6 +232,8 @@ export default function FileEditor({
   onStatusChange,
   onTitleChange,
 }: FileEditorProps) {
+  const user = useAppSelector((state) => state.auth.user);
+
   if (userRole === "VIEWER") {
     return (
       <div className="flex flex-col min-h-0 flex-1">
@@ -203,6 +247,7 @@ export default function FileEditor({
       file={file}
       workspaceId={workspaceId}
       folderId={folderId}
+      user={user ?? undefined}
       onStatusChange={onStatusChange}
       onTitleChange={onTitleChange}
     />
