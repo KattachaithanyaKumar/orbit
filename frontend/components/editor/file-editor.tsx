@@ -101,12 +101,8 @@ function EditableEditor({
   const dispatch = useAppDispatch();
   const token = useAppSelector((state) => state.auth.token);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fileRef = useRef(file);
+  const prevFileIdRef = useRef(file.id);
   const isRemoteUpdateRef = useRef(false);
-
-  useEffect(() => {
-    fileRef.current = file;
-  });
 
   const {
     remoteCursors,
@@ -164,8 +160,11 @@ function EditableEditor({
   const editor = useEditor({
     extensions: editorExtensions,
     content: file.content || undefined,
+    onCreate: ({ editor: editorInstance }) => {
+      setTimeout(() => editorInstance.commands.focus("end"), 0);
+    },
     onUpdate: ({ editor: editorInstance }) => {
-      debouncedSave(editorInstance, fileRef.current.id);
+      debouncedSave(editorInstance, file.id);
     },
     onSelectionUpdate: ({ editor: editorInstance }) => {
       const { from } = editorInstance.state.selection;
@@ -194,13 +193,15 @@ function EditableEditor({
   }, [remoteFileUpdate, editor, clearRemoteUpdate]);
 
   useEffect(() => {
-    if (editor && file.id !== fileRef.current.id) {
+    if (editor && file.id !== prevFileIdRef.current) {
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
       }
       isRemoteUpdateRef.current = true;
       editor.commands.setContent(file.content || "");
       isRemoteUpdateRef.current = false;
+      prevFileIdRef.current = file.id;
+      setTimeout(() => editor.commands.focus("end"), 0);
     }
   }, [file.id, file.content, editor]);
 

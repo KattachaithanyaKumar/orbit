@@ -26,7 +26,15 @@ import {
 } from "@/store/files-slice";
 import type { Role } from "@/lib/api";
 
-export default function FileTree({ workspaceId, userRole }: { workspaceId: number; userRole?: Role | null }) {
+export default function FileTree({
+  workspaceId,
+  userRole,
+  onExpandedFoldersChange,
+}: {
+  workspaceId: number;
+  userRole?: Role | null;
+  onExpandedFoldersChange?: (ids: number[]) => void;
+}) {
   const dispatch = useAppDispatch();
   const token = useAppSelector((state) => state.auth.token);
   const { folders, loading } = useAppSelector((state) => state.folders);
@@ -48,6 +56,10 @@ export default function FileTree({ workspaceId, userRole }: { workspaceId: numbe
       dispatch(fetchFolders({ workspaceId, token }));
     }
   }, [workspaceId, token, dispatch]);
+
+  useEffect(() => {
+    onExpandedFoldersChange?.(Array.from(expandedIds));
+  }, [expandedIds, onExpandedFoldersChange]);
 
   const toggleExpand = useCallback(
     (folderId: number) => {

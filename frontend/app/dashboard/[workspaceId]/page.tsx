@@ -2,11 +2,13 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { FolderTree, FileText, Search, Menu } from "lucide-react";
+import { FolderTree, FileText, Menu, Command } from "lucide-react";
 import Sidebar from "@/components/sidebar/sidebar";
 import ThemeToggle from "@/app/components/theme-toggle";
 import CreateWorkspaceModal from "@/app/components/create-workspace-modal";
+import CreateFolderModal from "@/app/components/create-folder-modal";
 import FileEditor from "@/components/editor/file-editor";
+import CommandPalette from "@/app/components/command-palette";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchWorkspaces, setActiveWorkspace } from "@/store/workspaces-slice";
 import { clearActiveFile } from "@/store/files-slice";
@@ -66,6 +68,11 @@ export default function WorkspacePage() {
     "saved",
   );
   const [userRole, setUserRole] = useState<Role | null>(null);
+  const [fileViewers, setFileViewers] = useState<{ userId: number; email: string }[]>([]);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [collaboratorsModalOpen, setCollaboratorsModalOpen] = useState(false);
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [expandedFolderIds, setExpandedFolderIds] = useState<number[]>([]);
 
   useEffect(() => {
     if (hydrated && !isAuthenticated) {
@@ -114,6 +121,19 @@ export default function WorkspacePage() {
     }
   }, [token, workspaceId, dispatch]);
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const isMod = e.metaKey || e.ctrlKey;
+      if (isMod && e.key === "k") {
+        e.preventDefault();
+        e.stopPropagation();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
+  }, []);
+
   const handleStatusChange = useCallback(
     (status: "saved" | "saving" | "error") => {
       setSaveStatus(status);
@@ -147,6 +167,9 @@ export default function WorkspacePage() {
         userRole={userRole}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        collaboratorsModalOpen={collaboratorsModalOpen}
+        onCollaboratorsModalClose={() => setCollaboratorsModalOpen(false)}
+        onExpandedFoldersChange={setExpandedFolderIds}
       />
 
       <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
@@ -197,9 +220,15 @@ export default function WorkspacePage() {
               </div>
             )}
             <ThemeToggle />
-            <button className="hidden items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex">
-              <Search className="h-4 w-4" />
-              Search
+            <button
+              onClick={() => setCommandPaletteOpen(true)}
+              className="hidden items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
+            >
+              <Command className="h-3.5 w-3.5" />
+              <span>Search</span>
+              <kbd className="ml-1 rounded border border-border bg-muted px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
+                Ctrl K
+              </kbd>
             </button>
           </div>
         </header>
@@ -240,6 +269,23 @@ export default function WorkspacePage() {
       <CreateWorkspaceModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+      />
+
+      <CreateFolderModal
+        open={createFolderOpen}
+        onClose={() => setCreateFolderOpen(false)}
+        workspaceId={workspaceId}
+      />
+
+      <CommandPalette
+        open={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        workspaceId={workspaceId}
+        expandedFolderIds={expandedFolderIds}
+        activeFolderId={activeFolderId}
+        onOpenCreateFolder={() => setCreateFolderOpen(true)}
+        onOpenCollaborators={() => setCollaboratorsModalOpen(true)}
+        onOpenCreateWorkspace={() => setModalOpen(true)}
       />
     </div>
   );
