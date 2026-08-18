@@ -1,21 +1,29 @@
-"use client";
+"use client"
 
 import { useRouter } from "next/navigation";
-import { LogOut, Settings } from "lucide-react";
+import { useState } from "react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { LogOut, Settings, Users } from "lucide-react";
 import { logout } from "@/store/auth-slice";
 import WorkspaceSwitcher from "./workspace-switcher";
 import FileTree from "./file-tree";
+import CollaboratorsModal from "@/app/components/collaborators-modal";
+import type { Role } from "@/lib/api";
 
 interface SidebarProps {
   onOpenCreateModal: () => void;
+  workspaceId?: number;
+  userRole?: Role | null;
 }
 
-export default function Sidebar({ onOpenCreateModal }: SidebarProps) {
+export default function Sidebar({ onOpenCreateModal, workspaceId, userRole }: SidebarProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { activeWorkspaceId } = useAppSelector((state) => state.workspaces);
+  const [collaboratorsModalOpen, setCollaboratorsModalOpen] = useState(false);
+
+  const canSeeCollaborators = userRole === "OWNER" || userRole === "ADMIN" || (workspaceId != null && userRole === null);
 
   return (
     <aside className="flex w-64 flex-col border-r border-border bg-card">
@@ -47,6 +55,15 @@ export default function Sidebar({ onOpenCreateModal }: SidebarProps) {
             <Settings className="h-4 w-4" />
             Settings
           </button>
+          {canSeeCollaborators && (
+            <button
+              onClick={() => setCollaboratorsModalOpen(true)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Users className="h-4 w-4" />
+              Collaborators
+            </button>
+          )}
         </nav>
       </div>
 
@@ -70,6 +87,14 @@ export default function Sidebar({ onOpenCreateModal }: SidebarProps) {
           </button>
         </div>
       </div>
+
+      {workspaceId && (
+        <CollaboratorsModal
+          workspaceId={workspaceId}
+          open={collaboratorsModalOpen}
+          onClose={() => setCollaboratorsModalOpen(false)}
+        />
+      )}
     </aside>
   );
 }

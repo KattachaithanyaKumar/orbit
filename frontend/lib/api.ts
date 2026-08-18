@@ -40,6 +40,7 @@ export interface Workspace {
   icon: string;
   accentColor: string;
   createdAt: string;
+  owner?: { id: number; email: string };
 }
 
 export async function getWorkspaces(token: string): Promise<Workspace[]> {
@@ -247,4 +248,107 @@ export async function deleteFile(
     const data = await res.json().catch(() => ({}));
     throw new Error(data.message || "Failed to delete file");
   }
+}
+
+export interface WorkspaceMember {
+  id: number;
+  userId: number;
+  role: string;
+  joinedAt: string;
+}
+
+export type Role = 'OWNER' | 'ADMIN' | 'EDITOR' | 'VIEWER'
+
+export interface UserSearchResult {
+  id: number;
+  email: string;
+  isMember: boolean;
+}
+
+export async function getWorkspaceMembers(workspaceId: number, token: string) {
+  const res = await fetch(`${API_URL}/workspaces/${workspaceId}/members`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to fetch workspace members");
+  }
+  return res.json();
+}
+
+export async function getMyRole(workspaceId: number, token: string): Promise<Role | null> {
+  const res = await fetch(`${API_URL}/workspaces/${workspaceId}/members/my-role`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function addWorkspaceMember(
+  workspaceId: number,
+  userId: number,
+  role: string,
+  token: string,
+) {
+  const res = await fetch(`${API_URL}/workspaces/${workspaceId}/members`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ userId, role }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to add workspace member");
+  }
+  return res.json();
+}
+
+export async function updateMemberRole(
+  workspaceId: number,
+  userId: number,
+  role: string,
+  token: string,
+) {
+  const res = await fetch(`${API_URL}/workspaces/${workspaceId}/members/role`, {
+    method: "PATCH",
+    headers: authHeaders(token),
+    body: JSON.stringify({ userId, role }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to update member role");
+  }
+  return res.json();
+}
+
+export async function removeWorkspaceMember(
+  workspaceId: number,
+  userId: number,
+  token: string,
+) {
+  const res = await fetch(`${API_URL}/workspaces/${workspaceId}/members/${userId}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to remove workspace member");
+  }
+}
+
+export async function searchUsersInWorkspace(
+  workspaceId: number,
+  email: string,
+  token: string,
+) {
+  const res = await fetch(
+    `${API_URL}/users/search?email=${email}&workspaceId=${workspaceId}`,
+    {
+      headers: authHeaders(token),
+    },
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || "Failed to search users");
+  }
+  return res.json();
 }
