@@ -281,7 +281,8 @@ export async function getMyRole(workspaceId: number, token: string): Promise<Rol
     headers: authHeaders(token),
   });
   if (!res.ok) return null;
-  return res.json();
+  const text = await res.text();
+  return text.replace(/"/g, "") as Role;
 }
 
 export async function addWorkspaceMember(

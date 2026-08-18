@@ -8,8 +8,11 @@ import { AuthModule } from './auth/auth.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { FoldersModule } from './folders/folders.module';
 import { FilesModule } from './files/files.module';
+import { PermissionsModule } from './permissions/permissions.module';
+import { RealTimeModule } from './realtime/realtime.module';
 import { User } from './users/entities/user.entity';
 import { Workspace } from './workspaces/entities/workspace.entity';
+import { WorkspaceMember } from './permissions/entities/workspace-member.entity';
 import { Folder } from './folders/entities/folder.entity';
 import { File } from './files/entities/file.entity';
 
@@ -26,7 +29,7 @@ import { File } from './files/entities/file.entity';
         username: config.get('DB_USERNAME', 'root'),
         password: config.get('DB_PASSWORD', 'root'),
         database: config.get('DB_DATABASE', 'orbit'),
-        entities: [User, Workspace, Folder, File],
+        entities: [User, Workspace, WorkspaceMember, Folder, File],
         synchronize: true,
       }),
     }),
@@ -35,6 +38,8 @@ import { File } from './files/entities/file.entity';
     WorkspacesModule,
     FoldersModule,
     FilesModule,
+    PermissionsModule,
+    RealTimeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

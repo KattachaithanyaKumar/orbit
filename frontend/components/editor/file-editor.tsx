@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
+import { generateHTML } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
@@ -9,16 +10,18 @@ import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
+
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { updateFileContent } from "@/store/files-slice";
-import { FileItem } from "@/lib/api";
+import { FileItem, Role } from "@/lib/api";
 import EditorToolbar from "./editor-toolbar";
 
 interface FileEditorProps {
   file: FileItem;
   workspaceId: number;
   folderId: number;
+  userRole?: Role | null;
   onStatusChange?: (status: "saved" | "saving" | "error") => void;
   onTitleChange?: (title: string) => void;
 }
@@ -44,18 +47,60 @@ function extractTitle(content: unknown): string {
   return "Untitled";
 }
 
-export default function FileEditor({
+const editorExtensions = [
+  StarterKit,
+  Placeholder.configure({ placeholder: "Start writing..." }),
+  Underline,
+  Highlight.configure({ multicolor: false }),
+  TextAlign.configure({ types: ["heading", "paragraph"] }),
+  Link.configure({
+    openOnClick: false,
+    HTMLAttributes: { class: "text-primary underline cursor-pointer" },
+  }),
+  Image.configure({ allowBase64: true }),
+];
+
+function ReadOnlyViewer({ content }: { content: unknown }) {
+  const html = useMemo(() => {
+    if (!content || typeof content !== "object") return "";
+    return generateHTML(content as Parameters<typeof generateHTML>[0], editorExtensions);
+  }, [content]);
+
+  if (!html) return null;
+
+  return (
+    <div className="flex-1 overflow-y-auto px-12 py-8">
+      <div
+        className="tiptap prose prose-sm max-w-none text-foreground [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mt-6 [&_h1]:mb-3 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:my-2 [&_ul]:my-2 [&_ul]:pl-6 [&_ul]:list-disc [&_ol]:my-2 [&_ol]:pl-6 [&_ol]:list-decimal [&_li]:my-0.5 [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_pre]:bg-muted [&_pre]:rounded-lg [&_pre]:p-4 [&_pre]:my-3 [&_pre]:overflow-x-auto [&_code]:bg-muted [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_hr]:my-6 [&_hr]:border-border [&_img]:max-w-full [&_img]:rounded-lg"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </div>
+  );
+}
+
+interface EditableEditorProps {
+  file: FileItem;
+  workspaceId: number;
+  folderId: number;
+  onStatusChange?: (status: "saved" | "saving" | "error") => void;
+  onTitleChange?: (title: string) => void;
+}
+
+function EditableEditor({
   file,
   workspaceId,
   folderId,
   onStatusChange,
   onTitleChange,
-}: FileEditorProps) {
+}: EditableEditorProps) {
   const dispatch = useAppDispatch();
   const token = useAppSelector((state) => state.auth.token);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileRef = useRef(file);
-  fileRef.current = file;
+
+  useEffect(() => {
+    fileRef.current = file;
+  });
 
   const debouncedSave = useCallback(
     (editorInstance: { getJSON: () => unknown }, fileId: number) => {
@@ -96,28 +141,7 @@ export default function FileEditor({
   );
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({
-        placeholder: "Start writing...",
-      }),
-      Underline,
-      Highlight.configure({
-        multicolor: false,
-      }),
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "text-primary underline cursor-pointer",
-        },
-      }),
-      Image.configure({
-        allowBase64: true,
-      }),
-    ],
+    extensions: editorExtensions,
     content: file.content || undefined,
     onUpdate: ({ editor: editorInstance }) => {
       debouncedSave(editorInstance, fileRef.current.id);
@@ -155,5 +179,32 @@ export default function FileEditor({
         <EditorContent editor={editor} />
       </div>
     </div>
+  );
+}
+
+export default function FileEditor({
+  file,
+  workspaceId,
+  folderId,
+  userRole,
+  onStatusChange,
+  onTitleChange,
+}: FileEditorProps) {
+  if (userRole === "VIEWER") {
+    return (
+      <div className="flex flex-col min-h-0 flex-1">
+        <ReadOnlyViewer content={file.content} />
+      </div>
+    );
+  }
+
+  return (
+    <EditableEditor
+      file={file}
+      workspaceId={workspaceId}
+      folderId={folderId}
+      onStatusChange={onStatusChange}
+      onTitleChange={onTitleChange}
+    />
   );
 }

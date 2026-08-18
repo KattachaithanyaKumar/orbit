@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Folder } from '../../folders/entities/folder.entity';
+import { WorkspaceMember } from '../../permissions/entities/workspace-member.entity';
 
 @Entity('workspaces')
 export class Workspace {
@@ -31,6 +32,9 @@ export class Workspace {
 
   @OneToMany(() => Folder, (folder) => folder.workspace)
   folders: Folder[];
+
+  @OneToMany(() => WorkspaceMember, (member) => member.workspace)
+  workspaceMembers: WorkspaceMember[];
 
   @CreateDateColumn()
   createdAt: Date;

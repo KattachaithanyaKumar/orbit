@@ -20,7 +20,6 @@ export default function Sidebar({ onOpenCreateModal, workspaceId, userRole }: Si
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const { activeWorkspaceId } = useAppSelector((state) => state.workspaces);
   const [collaboratorsModalOpen, setCollaboratorsModalOpen] = useState(false);
 
   const canSeeCollaborators = userRole === "OWNER" || userRole === "ADMIN" || (workspaceId != null && userRole === null);
@@ -45,8 +44,8 @@ export default function Sidebar({ onOpenCreateModal, workspaceId, userRole }: Si
         <WorkspaceSwitcher onOpenCreateModal={onOpenCreateModal} />
       </div>
 
-      {activeWorkspaceId && (
-        <FileTree workspaceId={activeWorkspaceId} />
+      {workspaceId && (
+        <FileTree workspaceId={workspaceId} userRole={userRole} />
       )}
 
       <div className="mt-auto border-t border-border p-3">

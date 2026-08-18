@@ -300,3 +300,31 @@ body {
 *::-webkit-scrollbar-thumb:hover {
   background-color: var(--muted-foreground);
 }
+
+/* Cursor decorations */
+.orbit-cursor {
+  position: absolute;
+  border-radius: 50%;
+  z-index: 9999;
+  pointer-events: none;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+}
+
+/* User name labels below cursors */
+.orbit-cursor-label {
+  position: absolute;
+  bottom: -1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary);
+  color: white;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.4rem;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 9999;
+  pointer-events: none;
+}

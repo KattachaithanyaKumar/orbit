@@ -76,7 +76,7 @@ export class PermissionsService {
     const member = members.find((m) => m.user.id === userId);
     
     // Check if user is the workspace owner
-    const workspace = await this.workspacesRepo.findOne({ where: { id: workspaceId } });
+    const workspace = await this.workspacesRepo.findOne({ where: { id: workspaceId }, relations: { owner: true } });
     const isOwner = workspace?.owner?.id === userId;
 
     if (!member && !isOwner) return false;

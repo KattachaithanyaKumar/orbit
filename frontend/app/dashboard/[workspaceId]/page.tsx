@@ -10,7 +10,44 @@ import FileEditor from "@/components/editor/file-editor";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchWorkspaces, setActiveWorkspace } from "@/store/workspaces-slice";
 import { clearActiveFile } from "@/store/files-slice";
+import { fetchWorkspaceMembers } from "@/store/collaborators-slice";
 import { getMyRole, type Role } from "@/lib/api";
+
+const ROLE_COLORS: Record<Role, string> = {
+  OWNER: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  ADMIN: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  EDITOR: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  VIEWER: "bg-muted text-muted-foreground",
+};
+
+function MemberAvatars({ emails }: { emails: string[] }) {
+  const shown = emails.slice(0, 5);
+  const overflow = emails.length - shown.length;
+
+  return (
+    <div className="flex items-center -space-x-2">
+      {shown.map((email, i) => {
+        const initial = email?.charAt(0).toUpperCase() || "?";
+        const hue = [...email].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
+        return (
+          <div
+            key={email + i}
+            title={email}
+            className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-background text-[11px] font-medium text-white ring-0"
+            style={{ backgroundColor: `hsl(${hue}, 55%, 45%)`, zIndex: shown.length - i }}
+          >
+            {initial}
+          </div>
+        );
+      })}
+      {overflow > 0 && (
+        <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-background bg-muted text-[11px] font-medium text-muted-foreground">
+          +{overflow}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -22,11 +59,11 @@ export default function WorkspacePage() {
   );
   const { workspaces, loading } = useAppSelector((state) => state.workspaces);
   const { activeFile, activeFolderId } = useAppSelector((state) => state.files);
+  const { members } = useAppSelector((state) => state.collaborators);
   const [modalOpen, setModalOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">(
     "saved",
   );
-  const [displayTitle, setDisplayTitle] = useState("");
   const [userRole, setUserRole] = useState<Role | null>(null);
 
   useEffect(() => {
@@ -71,10 +108,10 @@ export default function WorkspacePage() {
   }, [workspaceId, token, workspaces, user]);
 
   useEffect(() => {
-    if (activeFile) {
-      setDisplayTitle(activeFile.name);
+    if (token && workspaceId) {
+      dispatch(fetchWorkspaceMembers(workspaceId));
     }
-  }, [activeFile?.id]);
+  }, [token, workspaceId, dispatch]);
 
   const handleStatusChange = useCallback(
     (status: "saved" | "saving" | "error") => {
@@ -83,9 +120,12 @@ export default function WorkspacePage() {
     [],
   );
 
+  const [editorTitle, setEditorTitle] = useState("");
   const handleTitleChange = useCallback((title: string) => {
-    setDisplayTitle(title);
+    setEditorTitle(title);
   }, []);
+
+  const displayTitle = editorTitle || activeFile?.name || "";
 
   if (!hydrated || !isAuthenticated) {
     return (
@@ -96,6 +136,7 @@ export default function WorkspacePage() {
   }
 
   const workspace = workspaces.find((ws) => ws.id === workspaceId);
+  const memberEmails = members.map((m) => m.userEmail).filter(Boolean);
 
   return (
     <div className="flex h-screen bg-background">
@@ -134,7 +175,15 @@ export default function WorkspacePage() {
               )}
             </>
           ) : null}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-3">
+            {userRole && (
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[userRole]}`}>
+                {userRole}
+              </span>
+            )}
+            {memberEmails.length > 0 && (
+              <MemberAvatars emails={memberEmails} />
+            )}
             <ThemeToggle />
             <button className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
               <Search className="h-4 w-4" />
@@ -153,6 +202,7 @@ export default function WorkspacePage() {
               file={activeFile}
               workspaceId={workspaceId}
               folderId={activeFolderId}
+              userRole={userRole}
               onStatusChange={handleStatusChange}
               onTitleChange={handleTitleChange}
             />
