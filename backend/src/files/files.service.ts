@@ -10,6 +10,8 @@ import { UpdateFileDto } from './dto/update-file.dto';
 import { File } from './entities/file.entity';
 import { Workspace } from '../workspaces/entities/workspace.entity';
 import { Folder } from '../folders/entities/folder.entity';
+import { PermissionsService } from '../permissions/permissions.service';
+import { Role } from '../permissions/roles.enum';
 
 @Injectable()
 export class FilesService {
@@ -20,26 +22,23 @@ export class FilesService {
     private workspacesRepo: Repository<Workspace>,
     @InjectRepository(Folder)
     private foldersRepo: Repository<Folder>,
+    private readonly permissionsService: PermissionsService,
   ) {}
 
-  private async verifyAccess(
+  private async verifyRoleAccess(
     workspaceId: number,
-    folderId: number,
     userId: number,
-  ): Promise<Folder> {
-    const workspace = await this.workspacesRepo.findOne({
-      where: { id: workspaceId },
-      relations: { owner: true },
-    });
-    if (!workspace) throw new NotFoundException('Workspace not found');
-    if (workspace.owner.id !== userId)
-      throw new ForbiddenException('Access denied');
+    requiredRole: Role,
+  ): Promise<boolean> {
+    return this.permissionsService.verifyRoleAccess(workspaceId, userId, requiredRole);
+  }
 
-    const folder = await this.foldersRepo.findOne({
-      where: { id: folderId, workspace: { id: workspaceId } },
-    });
-    if (!folder) throw new NotFoundException('Folder not found');
-    return folder;
+  private async verifyWorkspaceAccess(
+    workspaceId: number,
+    userId: number,
+    requiredRole: Role,
+  ): Promise<boolean> {
+    return this.verifyRoleAccess(workspaceId, userId, requiredRole);
   }
 
   async create(
@@ -48,7 +47,14 @@ export class FilesService {
     dto: CreateFileDto,
     userId: number,
   ): Promise<File> {
-    const folder = await this.verifyAccess(workspaceId, folderId, userId);
+    const folder = await this.foldersRepo.findOne({
+      where: { id: folderId, workspace: { id: workspaceId } },
+    });
+    if (!folder) throw new NotFoundException('Folder not found');
+
+    const hasAccess = await this.verifyWorkspaceAccess(workspaceId, userId, Role.EDITOR);
+    if (!hasAccess) throw new ForbiddenException('Access denied');
+
     const file = this.filesRepo.create({
       ...dto,
       folder: { id: folder.id },
@@ -61,7 +67,9 @@ export class FilesService {
     folderId: number,
     userId: number,
   ): Promise<File[]> {
-    await this.verifyAccess(workspaceId, folderId, userId);
+    const hasAccess = await this.verifyWorkspaceAccess(workspaceId, userId, Role.VIEWER);
+    if (!hasAccess) throw new ForbiddenException('Access denied');
+
     return this.filesRepo.find({
       where: { folder: { id: folderId } },
       order: { position: 'ASC', createdAt: 'DESC' },
@@ -74,7 +82,9 @@ export class FilesService {
     folderId: number,
     userId: number,
   ): Promise<File> {
-    await this.verifyAccess(workspaceId, folderId, userId);
+    const hasAccess = await this.verifyWorkspaceAccess(workspaceId, userId, Role.VIEWER);
+    if (!hasAccess) throw new ForbiddenException('Access denied');
+
     const file = await this.filesRepo.findOne({
       where: { id, folder: { id: folderId } },
     });
@@ -89,6 +99,9 @@ export class FilesService {
     dto: UpdateFileDto,
     userId: number,
   ): Promise<File> {
+    const hasAccess = await this.verifyWorkspaceAccess(workspaceId, userId, Role.EDITOR);
+    if (!hasAccess) throw new ForbiddenException('Access denied');
+
     const file = await this.findOne(id, workspaceId, folderId, userId);
     Object.assign(file, dto);
     return this.filesRepo.save(file);
@@ -100,6 +113,9 @@ export class FilesService {
     folderId: number,
     userId: number,
   ): Promise<void> {
+    const hasAccess = await this.verifyWorkspaceAccess(workspaceId, userId, Role.EDITOR);
+    if (!hasAccess) throw new ForbiddenException('Access denied');
+
     const file = await this.findOne(id, workspaceId, folderId, userId);
     await this.filesRepo.remove(file);
   }

@@ -24,8 +24,9 @@ import {
   setActiveFolderId,
   clearActiveFile,
 } from "@/store/files-slice";
+import type { Role } from "@/lib/api";
 
-export default function FileTree({ workspaceId }: { workspaceId: number }) {
+export default function FileTree({ workspaceId, userRole }: { workspaceId: number; userRole?: Role | null }) {
   const dispatch = useAppDispatch();
   const token = useAppSelector((state) => state.auth.token);
   const { folders, loading } = useAppSelector((state) => state.folders);
@@ -40,6 +41,7 @@ export default function FileTree({ workspaceId }: { workspaceId: number }) {
     folderId?: number;
   } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const canEdit = userRole !== "VIEWER";
 
   useEffect(() => {
     if (token && workspaceId) {
@@ -159,14 +161,16 @@ export default function FileTree({ workspaceId }: { workspaceId: number }) {
           <span className="text-xs font-medium text-muted-foreground">
             Files
           </span>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => setCreateModalOpen(true)}
-            title="Add folder"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="icon-xs"
+              onClick={() => setCreateModalOpen(true)}
+              title="Add folder"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
 
         {loading ? (
@@ -201,34 +205,38 @@ export default function FileTree({ workspaceId }: { workspaceId: number }) {
                     </button>
                     <FolderIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span className="flex-1 truncate">{folder.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      className="opacity-0 group-hover:opacity-100"
-                      title="Add file"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCreateFile(folder.id);
-                      }}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteTarget({
-                          id: folder.id,
-                          name: folder.name,
-                          type: "folder",
-                        });
-                      }}
-                      title="Delete folder"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    {canEdit && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          className="opacity-0 group-hover:opacity-100"
+                          title="Add file"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCreateFile(folder.id);
+                          }}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget({
+                              id: folder.id,
+                              name: folder.name,
+                              type: "folder",
+                            });
+                          }}
+                          title="Delete folder"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                   {isExpanded && (
                     <div className="ml-6 border-l border-border py-1 pl-2">
@@ -249,23 +257,25 @@ export default function FileTree({ workspaceId }: { workspaceId: number }) {
                             <span className="flex-1 truncate">
                               {file.name}
                             </span>
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              className="opacity-0 group-hover/file:opacity-100 text-muted-foreground hover:text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteTarget({
-                                  id: file.id,
-                                  name: file.name,
-                                  type: "file",
-                                  folderId: folder.id,
-                                });
-                              }}
-                              title="Delete file"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            {canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="icon-xs"
+                                className="opacity-0 group-hover/file:opacity-100 text-muted-foreground hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteTarget({
+                                    id: file.id,
+                                    name: file.name,
+                                    type: "file",
+                                    folderId: folder.id,
+                                  });
+                                }}
+                                title="Delete file"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
                           </div>
                         ))
                       )}
