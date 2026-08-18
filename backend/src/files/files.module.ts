@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { PermissionsModule } from '../permissions/permissions.module';
 import { File } from './entities/file.entity';
 import { Folder } from '../folders/entities/folder.entity';
 import { Workspace } from '../workspaces/entities/workspace.entity';
@@ -11,6 +12,7 @@ import { FilesController } from './files.controller';
   imports: [
     TypeOrmModule.forFeature([File, Folder, Workspace]),
     AuthModule,
+    PermissionsModule,
   ],
   controllers: [FilesController],
   providers: [FilesService],

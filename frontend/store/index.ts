@@ -3,6 +3,7 @@ import authReducer from "./auth-slice";
 import workspacesReducer from "./workspaces-slice";
 import foldersReducer from "./folders-slice";
 import filesReducer from "./files-slice";
+import collaboratorsReducer from "./collaborators-slice";
 
 export const makeStore = () =>
   configureStore({
@@ -11,6 +12,7 @@ export const makeStore = () =>
       workspaces: workspacesReducer,
       folders: foldersReducer,
       files: filesReducer,
+      collaborators: collaboratorsReducer,
     },
   });
 

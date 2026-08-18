@@ -1,11 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FolderTree } from "lucide-react";
 import Sidebar from "@/components/sidebar/sidebar";
 import ThemeToggle from "@/app/components/theme-toggle";
 import CreateWorkspaceModal from "@/app/components/create-workspace-modal";
+import CollaboratorsModal from "@/app/components/collaborators-modal";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { fetchWorkspaces } from "@/store/workspaces-slice";
 
@@ -16,6 +17,7 @@ export default function DashboardPage() {
   const { loading } = useAppSelector((state) => state.workspaces);
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { workspaceId } = useParams();
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
