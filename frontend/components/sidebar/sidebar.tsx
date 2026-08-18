@@ -16,15 +16,35 @@ interface SidebarProps {
   userRole?: Role | null;
   open?: boolean;
   onClose?: () => void;
+  collaboratorsModalOpen?: boolean;
+  onCollaboratorsModalClose?: () => void;
+  onExpandedFoldersChange?: (ids: number[]) => void;
 }
 
-export default function Sidebar({ onOpenCreateModal, workspaceId, userRole, open, onClose }: SidebarProps) {
+export default function Sidebar({
+  onOpenCreateModal,
+  workspaceId,
+  userRole,
+  open,
+  onClose,
+  collaboratorsModalOpen: controlledCollabOpen,
+  onCollaboratorsModalClose,
+  onExpandedFoldersChange,
+}: SidebarProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-  const [collaboratorsModalOpen, setCollaboratorsModalOpen] = useState(false);
+  const [internalCollabOpen, setInternalCollabOpen] = useState(false);
 
-  const canSeeCollaborators = userRole === "OWNER" || userRole === "ADMIN" || (workspaceId != null && userRole === null);
+  const collaboratorsModalOpen =
+    controlledCollabOpen !== undefined ? controlledCollabOpen : internalCollabOpen;
+  const closeCollaborators =
+    onCollaboratorsModalClose || (() => setInternalCollabOpen(false));
+
+  const canSeeCollaborators =
+    userRole === "OWNER" ||
+    userRole === "ADMIN" ||
+    (workspaceId != null && userRole === null);
 
   return (
     <>
@@ -71,7 +91,11 @@ export default function Sidebar({ onOpenCreateModal, workspaceId, userRole, open
         </div>
 
         {workspaceId && (
-          <FileTree workspaceId={workspaceId} userRole={userRole} />
+          <FileTree
+            workspaceId={workspaceId}
+            userRole={userRole}
+            onExpandedFoldersChange={onExpandedFoldersChange}
+          />
         )}
 
         <div className="mt-auto border-t border-border p-3">
@@ -82,7 +106,7 @@ export default function Sidebar({ onOpenCreateModal, workspaceId, userRole, open
             </button>
             {canSeeCollaborators && (
               <button
-                onClick={() => setCollaboratorsModalOpen(true)}
+                onClick={() => setInternalCollabOpen(true)}
                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <Users className="h-4 w-4" />
@@ -117,7 +141,7 @@ export default function Sidebar({ onOpenCreateModal, workspaceId, userRole, open
           <CollaboratorsModal
             workspaceId={workspaceId}
             open={collaboratorsModalOpen}
-            onClose={() => setCollaboratorsModalOpen(false)}
+            onClose={closeCollaborators}
           />
         )}
       </aside>
